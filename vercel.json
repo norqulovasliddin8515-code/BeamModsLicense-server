@@ -1,6 +1,3 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/webapp/index.html" },
-    { "source": "/(.*)", "destination": "/webapp/$1" }
-  ]
+  "cleanUrls": true
 }
