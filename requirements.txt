@@ -1,0 +1,7 @@
+# BeamNG.drive loyihasi uchun kerakli barcha kutubxonalar
+aiogram==3.10.0
+aiosqlite==0.20.0
+openai==1.40.0
+python-dotenv==1.0.1
+aiohttp==3.9.5
+cryptography==42.0.8

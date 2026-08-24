@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BeamModsStudio</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ─── Design Tokens ─────────────────────────────────── */
+        :root {
+            --bg:        #0d0f14;
+            --surface:   #161a24;
+            --surface2:  #1e2433;
+            --accent:    #5865f2;
+            --accent2:   #7b68ee;
+            --green:     #22c55e;
+            --text:      #f1f5f9;
+            --muted:     #64748b;
+            --border:    rgba(255,255,255,0.07);
+            --radius:    20px;
+            --shadow:    0 12px 40px rgba(0,0,0,0.5);
+        }
+
+        /* Light mode override via Telegram theme */
+        body.tg-light {
+            --bg:      #f0f4ff;
+            --surface: #ffffff;
+            --surface2:#e8edf8;
+            --text:    #1e1b4b;
+            --muted:   #64748b;
+            --border:  rgba(0,0,0,0.07);
+        }
+
+        * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+
+        html, body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* ─── App Layout ─────────────────────────────────────── */
+        .app {
+            max-width: 480px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ─── Header ─────────────────────────────────────────── */
+        .header {
+            padding: 16px 18px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            background: var(--bg);
+        }
+        .brand {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header-actions { display:flex; gap:10px; }
+        .icon-pill {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 38px; height: 38px;
+            display: flex; align-items:center; justify-content:center;
+            cursor: pointer; font-size: 16px;
+            transition: transform .15s;
+        }
+        .icon-pill:active { transform:scale(.92); }
+
+        /* ─── Tab Navigation ─────────────────────────────────── */
+        .tabs {
+            display: flex;
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 4px;
+            margin: 0 18px 14px;
+            flex-shrink: 0;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 9px 6px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all .25s cubic-bezier(.4,0,.2,1);
+            user-select: none;
+        }
+        .tab.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(88,101,242,.4);
+        }
+
+        /* ─── Pages ──────────────────────────────────────────── */
+        .page { display:none; flex:1; overflow:hidden; }
+        .page.active { display:flex; flex-direction:column; }
+
+        /* ─── CATALOG PAGE ───────────────────────────────────── */
+        .search-bar {
+            margin: 0 18px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            display: flex; align-items:center;
+            padding: 4px 14px;
+            flex-shrink: 0;
+        }
+        .search-bar input {
+            flex:1; border:none; background:transparent;
+            color:var(--text); font-size:14px; padding:10px 0;
+            outline:none;
+        }
+        .search-bar input::placeholder { color:var(--muted); }
+
+        .filter-scroll {
+            display:flex; gap:8px;
+            overflow-x:auto; padding:0 18px 12px;
+            scrollbar-width:none; flex-shrink:0;
+        }
+        .filter-scroll::-webkit-scrollbar { display:none; }
+        .filter-chip {
+            white-space:nowrap; padding:7px 16px;
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:30px; font-size:12px; font-weight:600;
+            color:var(--muted); cursor:pointer;
+            transition:all .2s;
+        }
+        .filter-chip.active {
+            background:var(--accent); color:#fff;
+            border-color:var(--accent);
+            box-shadow:0 4px 12px rgba(88,101,242,.35);
+        }
+
+        .catalog-grid {
+            display:grid;
+            grid-template-columns:repeat(2, 1fr);
+            gap:14px; padding:0 18px 90px;
+            overflow-y:auto; flex:1;
+        }
+
+        /* Mod Card */
+        .mod-card {
+            background:var(--surface);
+            border:1px solid var(--border);
+            border-radius:var(--radius);
+            overflow:hidden;
+            cursor:pointer;
+            transition:transform .2s cubic-bezier(.4,0,.2,1);
+        }
+        .mod-card:active { transform:scale(.96); }
+        .mod-card img {
+            width:100%; height:110px;
+            object-fit:cover; display:block;
+        }
+        .mod-card-body { padding:10px 12px 12px; }
+        .mod-card-name {
+            font-size:13px; font-weight:700;
+            white-space:nowrap; overflow:hidden;
+            text-overflow:ellipsis; margin-bottom:6px;
+        }
+        .mod-card-meta {
+            display:flex; justify-content:space-between;
+            align-items:center;
+        }
+        .mod-price {
+            font-size:14px; font-weight:800;
+            font-family:'Outfit',sans-serif;
+            color:var(--accent2);
+        }
+        .mod-cat-badge {
+            font-size:10px; font-weight:700; text-transform:uppercase;
+            padding:2px 8px; border-radius:8px;
+            background:var(--surface2); color:var(--muted);
+        }
+        .free-badge { background:rgba(34,197,94,.15); color:var(--green); }
+
+        /* ─── SHORTS FEED PAGE ───────────────────────────────── */
+        #page-shorts {
+            position:relative;
+            overflow:hidden;
+            touch-action:none;
+        }
+
+        .shorts-container {
+            display:flex; flex-direction:column;
+            height:100%; overflow:hidden;
+            position:relative;
+        }
+
+        .short-slide {
+            position:absolute; width:100%; height:100%;
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            transition:transform .4s cubic-bezier(.4,0,.2,1);
+            will-change:transform;
+        }
+
+        /* YouTube player container fills the slide */
+        .yt-player-wrap {
+            position:absolute; top:0; left:0;
+            width:100%; height:100%;
+            pointer-events:none; /* Let our UI layer handle events */
+        }
+        .yt-player-wrap iframe {
+            width:100%; height:100%;
+            border:none;
+        }
+
+        /* Dark gradient overlay at bottom */
+        .short-gradient {
+            position:absolute; bottom:0; left:0;
+            width:100%; height:55%;
+            background:linear-gradient(to top, rgba(0,0,0,.9) 0%, transparent 100%);
+            pointer-events:none;
+        }
+
+        /* Info bar over video */
+        .short-info {
+            position:absolute; bottom:90px; left:0; right:0;
+            padding:0 18px; z-index:10;
+        }
+        .short-mod-name {
+            font-family:'Outfit',sans-serif;
+            font-size:17px; font-weight:800;
+            margin-bottom:4px;
+            text-shadow:0 1px 6px rgba(0,0,0,.8);
+        }
+        .short-mod-cat {
+            font-size:12px; color:rgba(255,255,255,.7);
+            margin-bottom:12px;
+        }
+
+        /* CTA BUY button below video */
+        .short-buy-btn {
+            display:inline-flex; align-items:center; gap:8px;
+            background:linear-gradient(135deg,var(--accent),var(--accent2));
+            color:#fff; border:none;
+            padding:12px 22px; border-radius:30px;
+            font-size:14px; font-weight:700; cursor:pointer;
+            box-shadow:0 6px 20px rgba(88,101,242,.45);
+            transition:transform .15s;
+            pointer-events:auto;
+        }
+        .short-buy-btn:active { transform:scale(.95); }
+
+        /* Scroll hint arrows */
+        .scroll-hint {
+            position:absolute; right:14px;
+            display:flex; flex-direction:column;
+            align-items:center; gap:10px; z-index:20;
+            bottom:100px;
+        }
+        .scroll-hint-btn {
+            width:38px; height:38px;
+            background:rgba(255,255,255,.15);
+            backdrop-filter:blur(10px);
+            border:1px solid rgba(255,255,255,.2);
+            border-radius:50%; display:flex;
+            align-items:center; justify-content:center;
+            font-size:16px; cursor:pointer;
+            transition:transform .15s;
+        }
+        .scroll-hint-btn:active { transform:scale(.9); }
+
+        /* Progress dots */
+        .short-dots {
+            position:absolute; right:14px; top:50%;
+            transform:translateY(-50%);
+            display:flex; flex-direction:column; gap:6px; z-index:20;
+        }
+        .short-dot {
+            width:4px; height:16px; border-radius:2px;
+            background:rgba(255,255,255,.3);
+            transition:all .3s;
+        }
+        .short-dot.active {
+            background:#fff; height:28px;
+        }
+
+        /* ─── DETAIL BOTTOM SHEET ────────────────────────────── */
+        .sheet-backdrop {
+            position:fixed; inset:0;
+            background:rgba(0,0,0,.7);
+            backdrop-filter:blur(12px);
+            z-index:100; opacity:0; pointer-events:none;
+            transition:opacity .3s;
+        }
+        .sheet-backdrop.open { opacity:1; pointer-events:auto; }
+
+        .bottom-sheet {
+            position:fixed; bottom:0; left:50%; width:100%; max-width:480px;
+            transform:translate(-50%, 100%);
+            background:var(--surface);
+            border-radius:28px 28px 0 0;
+            padding:20px 22px 36px;
+            z-index:101; max-height:90vh; overflow-y:auto;
+            transition:transform .4s cubic-bezier(.16,1,.3,1);
+        }
+        .bottom-sheet.open { transform:translate(-50%, 0); }
+
+        .sheet-handle {
+            width:38px; height:4px; border-radius:2px;
+            background:var(--muted); margin:0 auto 18px;
+        }
+
+        .sheet-img {
+            width:100%; height:180px; object-fit:cover;
+            border-radius:16px; margin-bottom:16px;
+        }
+
+        .sheet-title {
+            font-family:'Outfit',sans-serif;
+            font-size:20px; font-weight:800; margin-bottom:6px;
+        }
+
+        .sheet-badge-row {
+            display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;
+        }
+        .badge {
+            font-size:11px; font-weight:700; text-transform:uppercase;
+            padding:4px 10px; border-radius:10px;
+        }
+        .badge-cat  { background:var(--surface2); color:var(--muted); }
+        .badge-free { background:rgba(34,197,94,.15); color:var(--green); }
+        .badge-paid { background:rgba(88,101,242,.15); color:var(--accent2); }
+
+        .sheet-desc {
+            font-size:14px; line-height:1.6;
+            color:var(--muted); margin-bottom:22px;
+        }
+
+        .sheet-action-row {
+            display:flex; gap:12px; align-items:center;
+        }
+
+        .price-big {
+            font-family:'Outfit',sans-serif;
+            font-size:24px; font-weight:800;
+            color:var(--text);
+        }
+
+        .cta-btn {
+            flex:1; padding:15px;
+            background:linear-gradient(135deg,var(--accent),var(--accent2));
+            color:#fff; border:none; border-radius:18px;
+            font-size:15px; font-weight:700; cursor:pointer;
+            box-shadow:0 8px 20px rgba(88,101,242,.4);
+            transition:transform .15s;
+        }
+        .cta-btn:active { transform:scale(.97); }
+        .cta-btn.free {
+            background:linear-gradient(135deg,var(--green),#16a34a);
+            box-shadow:0 8px 20px rgba(34,197,94,.3);
+        }
+
+        /* ─── Payment method selector ────────────────────────── */
+        .pay-methods {
+            display:flex; gap:10px; margin-bottom:18px;
+        }
+        .pay-method {
+            flex:1; padding:10px; border-radius:14px;
+            border:2px solid var(--border);
+            background:var(--surface2);
+            text-align:center; cursor:pointer;
+            font-size:13px; font-weight:700;
+            transition:all .2s;
+        }
+        .pay-method.active {
+            border-color:var(--accent);
+            background:rgba(88,101,242,.15);
+            color:var(--accent2);
+        }
+
+        /* ─── AI Chat ─────────────────────────────────────────── */
+        .ai-fab {
+            position:fixed; bottom:85px; right:18px;
+            width:52px; height:52px;
+            background:linear-gradient(135deg,#7b68ee,#a855f7);
+            border-radius:50%; display:flex;
+            align-items:center; justify-content:center;
+            font-size:22px; cursor:pointer; z-index:50;
+            box-shadow:0 8px 24px rgba(168,85,247,.4);
+            transition:transform .2s;
+        }
+        .ai-fab:active { transform:scale(.9); }
+
+        /* ─── Bottom Nav (Theme-matched) ─────────────────────── */
+        .bottom-nav-wrap {
+            position:fixed; bottom:18px;
+            left:50%; transform:translateX(-50%);
+            width:100%; max-width:480px;
+            padding:0 18px; z-index:60;
+            pointer-events:none;
+        }
+        .bottom-nav {
+            background:var(--surface);
+            border:1px solid var(--border);
+            border-radius:50px; padding:6px;
+            display:flex; align-items:center;
+            justify-content:space-between;
+            box-shadow:0 12px 30px rgba(0,0,0,.4);
+            pointer-events:auto;
+        }
+        .nav-item {
+            display:flex; align-items:center;
+            gap:7px; padding:10px 14px;
+            border-radius:35px;
+            color:var(--muted); cursor:pointer;
+            transition:all .3s cubic-bezier(.4,0,.2,1);
+            font-size:20px; user-select:none;
+        }
+        .nav-item .nav-lbl {
+            display:none; font-size:13px;
+            font-weight:700; color:var(--accent);
+            white-space:nowrap;
+        }
+        .nav-item.active {
+            background:rgba(88,101,242,.15);
+            color:var(--accent);
+            padding:10px 18px;
+        }
+        .nav-item.active .nav-lbl { display:block; }
+
+        /* ─── Loading ─────────────────────────────────────────── */
+        .loader {
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            gap:12px; padding:60px 0;
+            color:var(--muted); font-size:14px;
+        }
+        .spinner {
+            width:36px; height:36px;
+            border:3px solid var(--border);
+            border-top-color:var(--accent);
+            border-radius:50%;
+            animation:spin .7s linear infinite;
+        }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width:4px; height:4px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:var(--surface2); border-radius:4px; }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <!-- ── Header ─────────────────────────────────────────── -->
+    <header class="header">
+        <span class="brand">⚡ BeamModsStudio</span>
+        <div class="header-actions">
+            <div class="icon-pill" onclick="openMyOrders()">🛒</div>
+            <div class="icon-pill" onclick="openAIChat()">🤖</div>
+        </div>
+    </header>
+
+    <!-- ── Tab Bar ────────────────────────────────────────── -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('catalog', this)">🎮 Katalog</div>
+        <div class="tab"        onclick="switchTab('shorts',  this)">📱 Shorts</div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PAGE: CATALOG
+    ══════════════════════════════════════════════════════ -->
+    <div class="page active" id="page-catalog">
+        <!-- Search -->
+        <div class="search-bar">
+            <span style="color:var(--muted);margin-right:10px;font-size:16px">🔍</span>
+            <input type="text" id="searchInput" placeholder="Mod yoki xarita izlash...">
+        </div>
+
+        <!-- Category Filters -->
+        <div class="filter-scroll">
+            <div class="filter-chip active" onclick="filterCatalog('all', this)">✨ Barchasi</div>
+            <div class="filter-chip"        onclick="filterCatalog('cars', this)">🚗 Cars</div>
+            <div class="filter-chip"        onclick="filterCatalog('trucks', this)">🚛 Trucks</div>
+            <div class="filter-chip"        onclick="filterCatalog('maps', this)">🗺️ Maps</div>
+            <div class="filter-chip"        onclick="filterCatalog('3d_models', this)">🎨 3D Models</div>
+        </div>
+
+        <!-- Grid -->
+        <div class="catalog-grid" id="catalogGrid">
+            <div class="loader">
+                <div class="spinner"></div>
+                <span>Yuklanmoqda...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PAGE: SHORTS FEED (TikTok-style YouTube Shorts)
+    ══════════════════════════════════════════════════════ -->
+    <div class="page" id="page-shorts">
+        <div class="shorts-container" id="shortsContainer">
+            <!-- Slides injected by JS -->
+        </div>
+
+        <!-- Navigation arrows -->
+        <div class="scroll-hint">
+            <div class="scroll-hint-btn" onclick="navigateShort(-1)">▲</div>
+            <div class="scroll-hint-btn" onclick="navigateShort(1)">▼</div>
+        </div>
+
+        <!-- Progress dots -->
+        <div class="short-dots" id="shortDots"></div>
+    </div>
+
+</div><!-- .app -->
+
+<!-- ── AI FAB ────────────────────────────────────────────── -->
+<div class="ai-fab" onclick="openAIChat()">✨</div>
+
+<!-- ── Bottom Navigation ──────────────────────────────────── -->
+<div class="bottom-nav-wrap">
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchNav('catalog', this)">
+            🏠 <span class="nav-lbl">Home</span>
+        </div>
+        <div class="nav-item" onclick="switchNav('shorts', this)">📱</div>
+        <div class="nav-item" onclick="openMyOrders()">🛒</div>
+        <div class="nav-item" onclick="switchNav('ai', this)">🤖</div>
+        <div class="nav-item" onclick="openAIChat()">👤</div>
+    </nav>
+</div>
+
+<!-- ── Mod Detail Bottom Sheet ────────────────────────────── -->
+<div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
+<div class="bottom-sheet" id="modSheet">
+    <div class="sheet-handle" onclick="closeSheet()"></div>
+    <img id="sheetImg" class="sheet-img" src="" alt="">
+    <h2 class="sheet-title"  id="sheetTitle">—</h2>
+    <div class="sheet-badge-row">
+        <span class="badge badge-cat" id="sheetCat">—</span>
+        <span class="badge" id="sheetPriceBadge">—</span>
+    </div>
+    <p class="sheet-desc" id="sheetDesc">—</p>
+
+    <!-- Payment method selector (shown when price > 0) -->
+    <div class="pay-methods" id="payMethods">
+        <div class="pay-method active" onclick="selectPayMethod('click', this)">💳 Click</div>
+        <div class="pay-method"        onclick="selectPayMethod('payme', this)">🟢 Payme</div>
+    </div>
+
+    <div class="sheet-action-row">
+        <span class="price-big" id="sheetPriceBig">0 UZS</span>
+        <button class="cta-btn" id="sheetCtaBtn" onclick="buyCurrent()">Sotib olish</button>
+    </div>
+</div>
+
+<!-- YouTube IFrame API (loads asynchronously) -->
+<script>
+    // ── YouTube IFrame API loader ──────────────────────────
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+</script>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   BeamModsStudio TWA — Main JavaScript
+   ══════════════════════════════════════════════════════════ */
+
+// ── Telegram WebApp SDK ────────────────────────────────────
+const tg = window.Telegram.WebApp;
+tg.expand();
+tg.ready();
+
+// Dark / Light mode adaptation
+if (tg.colorScheme === 'light') {
+    document.body.classList.add('tg-light');
+}
+
+// ── State ──────────────────────────────────────────────────
+let allMods        = [];       // Bazadan yuklangan barcha modlar
+let currentMod     = null;     // Detail sheet uchun tanlangan mod
+let selectedPay    = 'click';  // To'lov usuli
+let currentTab     = 'catalog';
+let currentShortIdx = 0;       // Aktiv Shorts indeksi
+let ytPlayers      = {};       // YouTube player instancelari: { slideIndex: player }
+let shortMods      = [];       // YouTube URL si bor modlar
+
+// ── DEMO DATA (Backend API tayyor bo'lguncha) ─────────────
+// Haqiqiy loyihada bu yerdan /api/mods endpoint chaqiriladi.
+const DEMO_MODS = [
+    {
+        id:          1,
+        name:        'BMW M5 F90 Competition',
+        category:    'cars',
+        description: 'Haqiqiy PBR teksturalar, to\'g\'ri Jbeam fizikasi, V8 motor ovozlari bilan.',
+        price:       49900,
+        file_id:     'demo_file_id_bmw',
+        youtube_url: 'https://www.youtube.com/shorts/dQw4w9WgXcQ',
+        thumbnail:   'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&q=80',
+    },
+    {
+        id:          2,
+        name:        'Kamaz 6520 Offroad',
+        category:    'trucks',
+        description: 'Og\'ir offroad yuk mashinasi — shina yorilishi va sakrash fizikasi.',
+        price:       34900,
+        file_id:     'demo_file_id_kamaz',
+        youtube_url: 'https://www.youtube.com/shorts/9bZkp7q19f0',
+        thumbnail:   'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80',
+    },
+    {
+        id:          3,
+        name:        'Toshkent Shahri Xaritasi',
+        category:    'maps',
+        description: 'Toshkent ko\'chalari, tungi chiroqlar, 20+ km² ochiq dunyo.',
+        price:       24900,
+        file_id:     'demo_file_id_tashkent',
+        youtube_url: 'https://www.youtube.com/shorts/CevxZvSJLk8',
+        thumbnail:   'https://images.unsplash.com/photo-1578895101408-1a36b834405b?w=600&q=80',
+    },
+    {
+        id:          4,
+        name:        'Nissan GT-R R35 Nismo',
+        category:    'cars',
+        description: '600 HP, drift spec, Launch Control, sport egzoz effektlari.',
+        price:       59900,
+        file_id:     'demo_file_id_gtr',
+        youtube_url: 'https://www.youtube.com/shorts/kffacxfA7G4',
+        thumbnail:   'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=600&q=80',
+    },
+    {
+        id:          5,
+        name:        'BeamNG Flatbed Truck Pro',
+        category:    'trucks',
+        description: 'Keng yuk o\'rinli, offroad uchun mo\'ljallangan flatbed yuk mashinasi.',
+        price:       29900,
+        file_id:     'demo_file_id_flatbed',
+        youtube_url: '',
+        thumbnail:   'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80',
+    },
+];
+
+// ── Load catalog ──────────────────────────────────────────
+async function loadCatalog() {
+    // MVP: Use demo data. In production, fetch from your server API.
+    // e.g. const res = await fetch('/api/mods'); allMods = await res.json();
+    allMods    = DEMO_MODS;
+    shortMods  = allMods.filter(m => m.youtube_url);
+    renderCatalog(allMods);
+    renderShortsFeed();
+}
+
+// ── Render Catalog Grid ───────────────────────────────────
+function renderCatalog(mods) {
+    const grid = document.getElementById('catalogGrid');
+    if (!mods.length) {
+        grid.innerHTML = '<div class="loader"><span>Mod topilmadi 🙈</span></div>';
+        return;
+    }
+    grid.innerHTML = mods.map(mod => {
+        const priceStr = mod.price > 0
+            ? `${mod.price.toLocaleString('uz-UZ')} UZS`
+            : 'Bepul';
+        return `
+            <div class="mod-card" onclick="openSheet(${mod.id})">
+                <img src="${mod.thumbnail}" alt="${mod.name}" loading="lazy"
+                     onerror="this.src='https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400'">
+                <div class="mod-card-body">
+                    <div class="mod-card-name">${mod.name}</div>
+                    <div class="mod-card-meta">
+                        <span class="mod-price">${priceStr}</span>
+                        <span class="mod-cat-badge ${mod.price===0?'free-badge':''}">${mod.category}</span>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+// ── Filter & Search ───────────────────────────────────────
+let activeCategory = 'all';
+
+function filterCatalog(cat, el) {
+    activeCategory = cat;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    applyFilters();
+}
+
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+
+function applyFilters() {
+    const q   = document.getElementById('searchInput').value.toLowerCase();
+    const cat = activeCategory;
+    const filtered = allMods.filter(m => {
+        const matchCat  = cat === 'all' || m.category === cat;
+        const matchText = m.name.toLowerCase().includes(q)
+                       || (m.description||'').toLowerCase().includes(q);
+        return matchCat && matchText;
+    });
+    renderCatalog(filtered);
+}
+
+// ── Tab Switching ─────────────────────────────────────────
+function switchTab(tab, el) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(`page-${tab}`).classList.add('active');
+
+    if (tab === 'shorts') {
+        // Aktiv videoni ijro etish
+        playShort(currentShortIdx);
+    } else {
+        // Shorts dan chiqilsa aktiv videni to'xtatish
+        pauseAllPlayers();
+    }
+}
+
+function switchNav(tab, el) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    if (tab === 'catalog' || tab === 'shorts') {
+        const tabEl = document.querySelector(`.tab:nth-child(${tab==='catalog'?1:2})`);
+        switchTab(tab, tabEl);
+    }
+    tg.HapticFeedback.selectionChanged();
+}
+
+// ══════════════════════════════════════════════════════════
+//  YOUTUBE SHORTS FEED (TikTok-style vertical swiper)
+// ══════════════════════════════════════════════════════════
+
+// Extracts YouTube video ID from any YouTube URL format
+function extractYTId(url) {
+    if (!url) return null;
+    const patterns = [
+        /youtube\.com\/shorts\/([^?&]+)/,
+        /youtu\.be\/([^?&]+)/,
+        /youtube\.com\/watch\?v=([^&]+)/,
+    ];
+    for (const re of patterns) {
+        const m = url.match(re);
+        if (m) return m[1];
+    }
+    return null;
+}
+
+function renderShortsFeed() {
+    const container = document.getElementById('shortsContainer');
+    const dotsEl    = document.getElementById('shortDots');
+    container.innerHTML = '';
+    dotsEl.innerHTML    = '';
+
+    if (!shortMods.length) {
+        container.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:center;
+                height:100%;color:var(--muted);font-size:15px;text-align:center;padding:30px">
+                📹 Hozircha Shorts videolar mavjud emas.<br>Admin tez orada qo'shadi!
+            </div>`;
+        return;
+    }
+
+    shortMods.forEach((mod, i) => {
+        const ytId = extractYTId(mod.youtube_url);
+
+        const slide = document.createElement('div');
+        slide.className = 'short-slide';
+        slide.id        = `slide-${i}`;
+        slide.style.transform = i === 0 ? 'translateY(0%)' : `translateY(${(i)*100}%)`;
+
+        slide.innerHTML = `
+            <!-- YouTube Player (will be initialized by IFrame API) -->
+            <div class="yt-player-wrap" id="yt-wrap-${i}">
+                <div id="yt-player-${i}"></div>
+            </div>
+
+            <!-- Gradient overlay -->
+            <div class="short-gradient"></div>
+
+            <!-- Mod info + BUY button (Telegram-style CTA!) -->
+            <div class="short-info">
+                <div class="short-mod-name">${mod.name}</div>
+                <div class="short-mod-cat">📂 ${mod.category} · ${(mod.price||0).toLocaleString('uz-UZ')} UZS</div>
+                <button class="short-buy-btn" onclick="openSheet(${mod.id})">
+                    🛒 Shu modni sotib ol
+                </button>
+            </div>`;
+
+        container.appendChild(slide);
+
+        // Progress dot
+        const dot = document.createElement('div');
+        dot.className = `short-dot${i === 0 ? ' active' : ''}`;
+        dot.id        = `dot-${i}`;
+        dotsEl.appendChild(dot);
+    });
+
+    // Initialize YouTube players if API is ready
+    if (window.ytApiReady) {
+        initAllPlayers();
+    }
+
+    // Touch swipe handling
+    setupSwipeGesture(container);
+}
+
+// ── YouTube IFrame API Callback ───────────────────────────
+window.ytApiReady = false;
+window.onYouTubeIframeAPIReady = function () {
+    window.ytApiReady = true;
+    if (shortMods.length > 0) {
+        initAllPlayers();
+    }
+};
+
+function initAllPlayers() {
+    shortMods.forEach((mod, i) => {
+        if (ytPlayers[i]) return; // Already initialized
+        const ytId = extractYTId(mod.youtube_url);
+        if (!ytId) return;
+
+        ytPlayers[i] = new YT.Player(`yt-player-${i}`, {
+            videoId:    ytId,
+            playerVars: {
+                autoplay:       0,
+                controls:       0,
+                loop:           1,
+                playlist:       ytId,
+                mute:           0,
+                playsinline:    1,
+                rel:            0,
+                modestbranding: 1,
+                fs:             0,
+            },
+            height: '100%',
+            width:  '100%',
+            events: {
+                onReady: (e) => {
+                    if (i === currentShortIdx) e.target.playVideo();
+                },
+            },
+        });
+    });
+}
+
+function playShort(idx) {
+    if (!ytPlayers[idx] || !ytPlayers[idx].playVideo) return;
+    ytPlayers[idx].playVideo();
+}
+
+function pauseAllPlayers() {
+    Object.values(ytPlayers).forEach(p => {
+        try { if (p && p.pauseVideo) p.pauseVideo(); } catch (_) {}
+    });
+}
+
+function navigateShort(dir) {
+    const next = currentShortIdx + dir;
+    if (next < 0 || next >= shortMods.length) return;
+
+    // Pause current
+    try { ytPlayers[currentShortIdx]?.pauseVideo(); } catch (_) {}
+
+    // Animate slides
+    shortMods.forEach((_, i) => {
+        const slide = document.getElementById(`slide-${i}`);
+        if (slide) slide.style.transform = `translateY(${(i - next) * 100}%)`;
+        const dot = document.getElementById(`dot-${i}`);
+        if (dot) dot.className = `short-dot${i === next ? ' active' : ''}`;
+    });
+
+    currentShortIdx = next;
+
+    // Play new slide with small delay (let animation finish)
+    setTimeout(() => playShort(currentShortIdx), 350);
+    tg.HapticFeedback.impactOccurred('light');
+}
+
+// ── Touch Swipe for Shorts ────────────────────────────────
+function setupSwipeGesture(container) {
+    let startY = 0, isDragging = false;
+
+    container.addEventListener('touchstart', e => {
+        startY     = e.touches[0].clientY;
+        isDragging = true;
+    }, { passive: true });
+
+    container.addEventListener('touchend', e => {
+        if (!isDragging) return;
+        isDragging = false;
+        const dy = startY - e.changedTouches[0].clientY;
+        if (Math.abs(dy) > 50) navigateShort(dy > 0 ? 1 : -1);
+    }, { passive: true });
+
+    // Mouse scroll support (desktop/PC)
+    container.addEventListener('wheel', e => {
+        navigateShort(e.deltaY > 0 ? 1 : -1);
+    }, { passive: true });
+}
+
+// ══════════════════════════════════════════════════════════
+//  MOD DETAIL BOTTOM SHEET
+// ══════════════════════════════════════════════════════════
+
+function openSheet(modId) {
+    const mod = allMods.find(m => m.id === modId);
+    if (!mod) return;
+    currentMod = mod;
+
+    const isFree = mod.price === 0;
+    const priceStr = isFree ? 'Bepul' : `${mod.price.toLocaleString('uz-UZ')} UZS`;
+
+    document.getElementById('sheetImg').src         = mod.thumbnail;
+    document.getElementById('sheetTitle').innerText = mod.name;
+    document.getElementById('sheetCat').innerText   = mod.category;
+    document.getElementById('sheetDesc').innerText  = mod.description || '—';
+    document.getElementById('sheetPriceBig').innerText = priceStr;
+
+    const badge = document.getElementById('sheetPriceBadge');
+    badge.innerText  = priceStr;
+    badge.className  = `badge ${isFree ? 'badge-free' : 'badge-paid'}`;
+
+    const cta = document.getElementById('sheetCtaBtn');
+    cta.innerText  = isFree ? '⬇️ Bepul yuklab olish' : '🛒 Sotib olish';
+    cta.className  = `cta-btn ${isFree ? 'free' : ''}`;
+
+    // Hide payment selector for free mods
+    document.getElementById('payMethods').style.display = isFree ? 'none' : 'flex';
+
+    document.getElementById('sheetBackdrop').classList.add('open');
+    document.getElementById('modSheet').classList.add('open');
+    tg.HapticFeedback.impactOccurred('medium');
+}
+
+function closeSheet() {
+    document.getElementById('sheetBackdrop').classList.remove('open');
+    document.getElementById('modSheet').classList.remove('open');
+    currentMod = null;
+}
+
+function selectPayMethod(method, el) {
+    selectedPay = method;
+    document.querySelectorAll('.pay-method').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+}
+
+function buyCurrent() {
+    if (!currentMod) return;
+
+    // Sotib olish signalini botga yuborish
+    const payload = JSON.stringify({
+        action:         'buy_mod',
+        mod_id:         currentMod.id,
+        payment_method: currentMod.price === 0 ? 'free' : selectedPay,
+    });
+
+    tg.HapticFeedback.notificationOccurred('success');
+    closeSheet();
+
+    // Bot ga yuboramiz va WebApp ni yopamiz
+    // (Bot to'lov havolasini DM da yuboradi)
+    tg.sendData(payload);
+    tg.close();
+}
+
+// ── My Orders ─────────────────────────────────────────────
+function openMyOrders() {
+    tg.sendData(JSON.stringify({ action: 'get_orders' }));
+    tg.HapticFeedback.impactOccurred('light');
+    tg.close();
+}
+
+// ── AI Chat ───────────────────────────────────────────────
+function openAIChat() {
+    tg.sendData(JSON.stringify({ action: 'open_ai' }));
+    tg.HapticFeedback.impactOccurred('medium');
+    tg.close();
+}
+
+// ── Init ──────────────────────────────────────────────────
+loadCatalog();
+</script>
+</body>
+</html>
