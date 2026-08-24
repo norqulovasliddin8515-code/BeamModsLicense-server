@@ -1,8 +1,4 @@
-# Ignore Python bot backend from Vercel static build
 bot/
-*.py
-*.pyc
-__pycache__/
 *.db
 .env
 .env.*
