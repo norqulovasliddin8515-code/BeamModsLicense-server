@@ -592,78 +592,82 @@ if (tg.colorScheme === 'light') {
 }
 
 // ── State ──────────────────────────────────────────────────
-let allMods        = [];       // Bazadan yuklangan barcha modlar
-let currentMod     = null;     // Detail sheet uchun tanlangan mod
-let selectedPay    = 'click';  // To'lov usuli
-let currentTab     = 'catalog';
-let currentShortIdx = 0;       // Aktiv Shorts indeksi
-let ytPlayers      = {};       // YouTube player instancelari: { slideIndex: player }
-let shortMods      = [];       // YouTube URL si bor modlar
+let allMods         = [];
+let currentMod      = null;
+let selectedPay     = 'click';
+let currentTab      = 'catalog';
+let currentShortIdx = 0;
+let ytPlayers       = {};
+let shortMods       = [];
 
-// ── DEMO DATA (Backend API tayyor bo'lguncha) ─────────────
-// Haqiqiy loyihada bu yerdan /api/mods endpoint chaqiriladi.
-const DEMO_MODS = [
-    {
-        id:          1,
-        name:        'BMW M5 F90 Competition',
-        category:    'cars',
-        description: 'Haqiqiy PBR teksturalar, to\'g\'ri Jbeam fizikasi, V8 motor ovozlari bilan.',
-        price:       49900,
-        file_id:     'demo_file_id_bmw',
-        youtube_url: 'https://www.youtube.com/shorts/dQw4w9WgXcQ',
-        thumbnail:   'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&q=80',
-    },
-    {
-        id:          2,
-        name:        'Kamaz 6520 Offroad',
-        category:    'trucks',
-        description: 'Og\'ir offroad yuk mashinasi — shina yorilishi va sakrash fizikasi.',
-        price:       34900,
-        file_id:     'demo_file_id_kamaz',
-        youtube_url: 'https://www.youtube.com/shorts/9bZkp7q19f0',
-        thumbnail:   'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80',
-    },
-    {
-        id:          3,
-        name:        'Toshkent Shahri Xaritasi',
-        category:    'maps',
-        description: 'Toshkent ko\'chalari, tungi chiroqlar, 20+ km² ochiq dunyo.',
-        price:       24900,
-        file_id:     'demo_file_id_tashkent',
-        youtube_url: 'https://www.youtube.com/shorts/CevxZvSJLk8',
-        thumbnail:   'https://images.unsplash.com/photo-1578895101408-1a36b834405b?w=600&q=80',
-    },
-    {
-        id:          4,
-        name:        'Nissan GT-R R35 Nismo',
-        category:    'cars',
-        description: '600 HP, drift spec, Launch Control, sport egzoz effektlari.',
-        price:       59900,
-        file_id:     'demo_file_id_gtr',
-        youtube_url: 'https://www.youtube.com/shorts/kffacxfA7G4',
-        thumbnail:   'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=600&q=80',
-    },
-    {
-        id:          5,
-        name:        'BeamNG Flatbed Truck Pro',
-        category:    'trucks',
-        description: 'Keng yuk o\'rinli, offroad uchun mo\'ljallangan flatbed yuk mashinasi.',
-        price:       29900,
-        file_id:     'demo_file_id_flatbed',
-        youtube_url: '',
-        thumbnail:   'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80',
-    },
-];
+// ── API Configuration ──────────────────────────────────────
+// O'z Python API server manzilingizni bu yerga kiriting.
+// Local: http://localhost:8080  |  Production: https://yourdomain.com
+const API_URL = 'http://localhost:8080';
 
-// ── Load catalog ──────────────────────────────────────────
+// ── Load catalog from live API (with demo fallback) ────────
 async function loadCatalog() {
-    // MVP: Use demo data. In production, fetch from your server API.
-    // e.g. const res = await fetch('/api/mods'); allMods = await res.json();
-    allMods    = DEMO_MODS;
-    shortMods  = allMods.filter(m => m.youtube_url);
+    const grid = document.getElementById('catalogGrid');
+    grid.innerHTML = '<div class="loader"><div class="spinner"></div><span>Yuklanmoqda...</span></div>';
+
+    try {
+        const res  = await fetch(`${API_URL}/api/mods`, {
+            signal: AbortSignal.timeout(5000)
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'API xatosi');
+
+        // Backend field nomlari frontend ga moslashtiriladi:
+        //   video_url  → youtube_url
+        //   image_url  → thumbnail
+        allMods = data.mods.map(m => ({
+            ...m,
+            youtube_url: m.video_url || '',
+            thumbnail:   m.image_url || '',
+        }));
+
+    } catch (err) {
+        console.warn('[API] Backend yetib kelmadi, demo data ishlatiladi:', err.message);
+        allMods = DEMO_MODS;
+    }
+
+    shortMods = allMods.filter(m => m.youtube_url);
     renderCatalog(allMods);
     renderShortsFeed();
 }
+
+// ── Demo fallback data ─────────────────────────────────────
+const DEMO_MODS = [
+    { id:1, name:'BMW M5 F90 Competition', category:'cars',
+      description:'PBR teksturalar, V8 motor ovozlari.',
+      price:49900, file_id:'demo',
+      youtube_url:'https://www.youtube.com/shorts/dQw4w9WgXcQ',
+      thumbnail:'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&q=80' },
+    { id:2, name:'Kamaz 6520 Offroad', category:'trucks',
+      description:"Og'ir offroad yuk mashinasi.",
+      price:34900, file_id:'demo',
+      youtube_url:'https://www.youtube.com/shorts/9bZkp7q19f0',
+      thumbnail:'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80' },
+    { id:3, name:'Toshkent Shahri Xaritasi', category:'maps',
+      description:"20+ km² ochiq dunyo, tungi chiroqlar.",
+      price:24900, file_id:'demo',
+      youtube_url:'https://www.youtube.com/shorts/CevxZvSJLk8',
+      thumbnail:'https://images.unsplash.com/photo-1578895101408-1a36b834405b?w=600&q=80' },
+    { id:4, name:'Nissan GT-R R35 Nismo', category:'cars',
+      description:"600 HP drift spec, Launch Control.",
+      price:59900, file_id:'demo',
+      youtube_url:'https://www.youtube.com/shorts/kffacxfA7G4',
+      thumbnail:'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=600&q=80' },
+    { id:5, name:'BeamNG Flatbed Truck Pro', category:'trucks',
+      description:"Offroad uchun keng yuk mashinasi.",
+      price:29900, file_id:'demo',
+      youtube_url:'',
+      thumbnail:'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80' },
+];
+
+
+
+
 
 // ── Render Catalog Grid ───────────────────────────────────
 function renderCatalog(mods) {
