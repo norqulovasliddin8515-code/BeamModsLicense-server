@@ -16,7 +16,14 @@ from bot.config import OPENAI_API_KEY
 from bot import database as db
 
 router = Router()
-client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+
+# DeepSeek yoki OpenAI avtomatik aniqlash
+_is_deepseek = len(OPENAI_API_KEY) <= 36 and not OPENAI_API_KEY.startswith("sk-proj-")
+client = AsyncOpenAI(
+    api_key=OPENAI_API_KEY,
+    base_url="https://api.deepseek.com/v1" if _is_deepseek else None,
+)
+AI_MODEL = "deepseek-chat" if _is_deepseek else "gpt-4o-mini"
 
 # Har bir foydalanuvchi uchun suhbat tarixi (xotira)
 _chat_history: dict[int, list[dict]] = {}
@@ -123,7 +130,7 @@ async def ai_chat_handler(message: types.Message):
 
     try:
         response = await client.chat.completions.create(
-            model       = "gpt-4o-mini",
+            model       = AI_MODEL,
             messages    = [{"role": "system", "content": system}] + history,
             max_tokens  = 500,
             temperature = 0.7,
