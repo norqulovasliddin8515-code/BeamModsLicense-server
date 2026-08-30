@@ -611,7 +611,8 @@ async function loadCatalog() {
 
     try {
         const res  = await fetch(`${API_URL}/api/mods`, {
-            signal: AbortSignal.timeout(5000)
+            signal:  AbortSignal.timeout(5000),
+            headers: { 'ngrok-skip-browser-warning': 'true' },
         });
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'API xatosi');
