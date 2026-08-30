@@ -67,7 +67,49 @@ def _cancel_kb():
 
 
 # ─────────────────────────────────────────────
-#  1. Arxiv guruhida fayl ushlanadi
+#  DEBUG: Istalgan guruh/kanal xabari — real Chat ID ni aniqlash
+# ─────────────────────────────────────────────
+
+async def _send_debug_info(bot: Bot, message: types.Message):
+    """Guruh yoki kanaldan kelgan xabar haqida admin DM-iga debug info yuboradi."""
+    chat_id    = message.chat.id
+    chat_type  = message.chat.type
+    chat_title = message.chat.title or "Nomsiz"
+    has_file   = bool(message.document or message.video or message.audio)
+    has_file_str  = "Ha" if has_file else "Yo'q"
+    id_match_str  = "TOGRI" if chat_id == ARCHIVE_GROUP_ID else "NOTOGRI — .env ga kiriting!"
+    try:
+        await bot.send_message(
+            chat_id=ADMIN_ID,
+            text=(
+                f"<b>DEBUG: Kanal/Guruh xabari</b>\n\n"
+                f"Nomi: <b>{chat_title}</b>\n"
+                f"Chat ID: <code>{chat_id}</code>\n"
+                f"Tur: <b>{chat_type}</b>\n"
+                f"Fayl bormi: <b>{has_file_str}</b>\n\n"
+                f".env da ARCHIVE_GROUP_ID = <code>{ARCHIVE_GROUP_ID}</code>\n"
+                f"Natija: <b>{id_match_str}</b>"
+            ),
+            parse_mode="HTML",
+        )
+    except Exception as e:
+        print(f"[DEBUG] DM yuborishda xato: {e}")
+
+
+# Guruh xabarlari (group/supergroup)
+@router.message(F.chat.type.in_({"group", "supergroup"}))
+async def debug_group_msg(message: types.Message, bot: Bot):
+    await _send_debug_info(bot, message)
+
+
+# Kanal postlari (channel) — channel_post eventi
+@router.channel_post()
+async def debug_channel_post(message: types.Message, bot: Bot):
+    await _send_debug_info(bot, message)
+
+
+# ─────────────────────────────────────────────
+#  1a. Guruhda fayl ushlanadi (group/supergroup)
 # ─────────────────────────────────────────────
 
 @router.message(
@@ -75,10 +117,27 @@ def _cancel_kb():
     F.document | F.video | F.audio,
 )
 async def capture_file_id(message: types.Message, bot: Bot, state: FSMContext):
+    """Guruhga yuklangan faylni ushlaydi (yuklamaydi)."""
+    await _do_capture(message, bot, state)
+
+
+# ─────────────────────────────────────────────
+#  1b. Kanalda fayl ushlanadi (channel_post)
+# ─────────────────────────────────────────────
+
+@router.channel_post(
+    F.chat.id == ARCHIVE_GROUP_ID,
+    F.document | F.video | F.audio,
+)
+async def capture_channel_file_id(message: types.Message, bot: Bot, state: FSMContext):
+    """Kanalga yuklangan faylni ushlaydi (yuklamaydi)."""
+    await _do_capture(message, bot, state)
+
+
+async def _do_capture(message: types.Message, bot: Bot, state: FSMContext):
     """
-    Admin arxiv guruhiga fayl yuborganda chaqiriladi.
-    Faylni YUKLAB OLMAYDI — faqat file_id ni oladi.
-    Keyin Admin DM-iga o'tib FSM ni boshlaydi.
+    Fayl ID sini ushlaydi va Admin DM-ida FSM ni boshlaydi.
+    Faylni YUKLAB OLMAYDI — faqat file_id orqali ishlaydi.
     """
     file_obj = message.document or message.video or message.audio
     if not file_obj:
@@ -88,18 +147,16 @@ async def capture_file_id(message: types.Message, bot: Bot, state: FSMContext):
     file_name = getattr(file_obj, "file_name", "fayl")
     size_mb   = round(getattr(file_obj, "file_size", 0) / (1024 * 1024), 1)
 
-    # FSM ga file_id ni saqlaymiz
     await state.update_data(file_id=file_id, file_name=file_name)
     await state.set_state(AddMod.waiting_name)
 
-    # Admin DM-iga xabar
     await bot.send_message(
         chat_id=ADMIN_ID,
         text=(
-            f"📦 <b>Yangi fayl aniqlandi!</b>\n\n"
-            f"📄 <code>{file_name}</code>  •  {size_mb} MB\n"
-            f"🔑 file_id: <code>{file_id[:30]}...</code>\n\n"
-            f"Ushbu mod uchun <b>nomini</b> yozing 👇"
+            f"<b>Yangi fayl aniqlandi!</b>\n\n"
+            f"<code>{file_name}</code>  {size_mb} MB\n"
+            f"file_id: <code>{file_id[:40]}...</code>\n\n"
+            f"Ushbu mod uchun <b>nomini</b> yozing:"
         ),
         parse_mode="HTML",
         reply_markup=_cancel_kb(),
