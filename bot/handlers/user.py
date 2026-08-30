@@ -31,10 +31,11 @@ async def cmd_start(message: types.Message):
 
     # Bazaga qo'shish / yangilash
     await db.upsert_user(
-        user_id   = user.id,
-        full_name = user.full_name,
-        username  = user.username,
+        user_id  = user.id,
+        name     = user.full_name,
+        username = user.username,
     )
+
 
     # Web App tugmasi
     web_app_btn = KeyboardButton(
