@@ -604,31 +604,70 @@ let shortMods       = [];
 // Ngrok public URL — kompyuteringizdagi Python API ga ulanadi
 const API_URL = 'https://footsore-ungraded-till.ngrok-free.dev';
 
-
 // ── Load catalog from live API (with demo fallback) ────────
 async function loadCatalog() {
     const grid = document.getElementById('catalogGrid');
     grid.innerHTML = '<div class="loader"><div class="spinner"></div><span>Yuklanmoqda...</span></div>';
 
-    try {
-        const res  = await fetch(`${API_URL}/api/mods`, {
-            signal:  AbortSignal.timeout(5000),
-            headers: { 'ngrok-skip-browser-warning': 'true' },
-        });
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || 'API xatosi');
+    let data = null;
+    const bust = '?_t=' + Date.now();
 
-        // Backend field nomlari frontend ga moslashtiriladi:
-        //   video_url  → youtube_url
-        //   image_url  → thumbnail
+    // 1. Birinchi o'rinda o'z domenimizdagi (Vercel) /api/mods dan olamiz (eng tez, 100% ishonchli, CORS yo'q)
+    try {
+        const res = await fetch('/api/mods' + bust, { cache: 'no-store' });
+        if (res.ok) {
+            const parsed = await res.json();
+            if (parsed && parsed.ok && Array.isArray(parsed.mods) && parsed.mods.length > 0) {
+                data = parsed;
+            }
+        }
+    } catch (e) {
+        console.warn('Vercel API fetch error:', e);
+    }
+
+    // 2. Agar /api/mods bo'lmasa, to'g'ridan-to'g'ri /mods.json statik faylini sinaymiz
+    if (!data) {
+        try {
+            const res = await fetch('/mods.json' + bust, { cache: 'no-store' });
+            if (res.ok) {
+                const parsed = await res.json();
+                if (parsed && parsed.ok && Array.isArray(parsed.mods) && parsed.mods.length > 0) {
+                    data = parsed;
+                }
+            }
+        } catch (e) {
+            console.warn('mods.json fetch error:', e);
+        }
+    }
+
+    // 3. Agar Vercel da bo'lmasa, tashqi ngrok / local API ni sinaymiz
+    if (!data && typeof API_URL !== 'undefined' && API_URL) {
+        try {
+            const res = await fetch(`${API_URL}/api/mods` + bust, {
+                signal:  AbortSignal.timeout(4000),
+                headers: { 'ngrok-skip-browser-warning': 'true' },
+                cache:   'no-store'
+            });
+            if (res.ok) {
+                const parsed = await res.json();
+                if (parsed && parsed.ok && Array.isArray(parsed.mods) && parsed.mods.length > 0) {
+                    data = parsed;
+                }
+            }
+        } catch (e) {
+            console.warn('Ngrok external API fetch error:', e);
+        }
+    }
+
+    // Natijani qayta ishlash
+    if (data && Array.isArray(data.mods) && data.mods.length > 0) {
         allMods = data.mods.map(m => ({
             ...m,
             youtube_url: m.video_url || '',
             thumbnail:   m.image_url || '',
         }));
-
-    } catch (err) {
-        console.warn('[API] Backend yetib kelmadi, demo data ishlatiladi:', err.message);
+    } else {
+        console.warn('[API] Barcha jonli manbalar topilmadi, demo data ishlatiladi');
         allMods = DEMO_MODS;
     }
 

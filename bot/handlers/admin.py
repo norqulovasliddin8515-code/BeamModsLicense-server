@@ -290,10 +290,28 @@ async def step_image(message: types.Message, state: FSMContext):
         f"Nom: <b>{data['name']}</b>\n"
         f"Kategoriya: {data['category']}\n"
         f"Narx: {price_fmt} UZS\n\n"
-        f"Katalogda ko'rinadi",
+        f"Katalog yangilanmoqda...",
         parse_mode="HTML",
         reply_markup=ReplyKeyboardRemove(),
     )
+
+    # Avtomatik mods.json ni yangilab, GitHub/Vercel ga push qilish
+    await sync_mods_to_github()
+
+
+async def sync_mods_to_github():
+    """Barcha modlarni mods.json ga eksport qilib, GitHub/Vercel ga push qiladi."""
+    try:
+        import json, subprocess
+        mods = await db.get_all_mods()
+        with open("mods.json", "w", encoding="utf-8") as f:
+            json.dump({"ok": True, "count": len(mods), "mods": mods}, f, indent=2, ensure_ascii=False)
+        subprocess.run(["git", "add", "mods.json"], capture_output=True)
+        subprocess.run(["git", "commit", "-m", "auto: sync mods.json to Vercel"], capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], capture_output=True)
+        print("[SYNC] mods.json GitHub va Vercel ga muvaffaqiyatli push qilindi")
+    except Exception as e:
+        print(f"[SYNC] Xatolik: {e}")
 
 
 # ─────────────────────────────────────────────
@@ -339,6 +357,8 @@ async def cmd_deletemod(message: types.Message):
         return
     deleted = await db.delete_mod(int(parts[1]))
     if deleted:
-        await message.answer(f"Mod #{parts[1]} o'chirildi.")
+        await sync_mods_to_github()
+        await message.answer(f"Mod #{parts[1]} o'chirildi va katalog yangilandi.")
     else:
         await message.answer(f"Mod #{parts[1]} topilmadi.")
+

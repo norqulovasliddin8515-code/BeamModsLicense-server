@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/mods.json", "destination": "/mods.json" },
     { "source": "/api/(.*)", "destination": "/api/index.py" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
