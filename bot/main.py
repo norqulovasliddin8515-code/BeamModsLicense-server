@@ -55,6 +55,7 @@ ALLOWED_ORIGINS = {
     WEB_APP_URL,              # Vercel domeingiz
     "http://localhost:3000",  # Local development
     "http://127.0.0.1:5500",  # VS Code Live Server
+    "https://footsore-ungraded-till.ngrok-free.dev",  # Ngrok tunnel
 }
 
 

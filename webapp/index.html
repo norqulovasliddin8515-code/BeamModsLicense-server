@@ -601,9 +601,8 @@ let ytPlayers       = {};
 let shortMods       = [];
 
 // ── API Configuration ──────────────────────────────────────
-// O'z Python API server manzilingizni bu yerga kiriting.
-// Local: http://localhost:8080  |  Production: https://yourdomain.com
-const API_URL = 'http://localhost:8080';
+// Ngrok public URL — kompyuteringizdagi Python API ga ulanadi
+const API_URL = 'https://footsore-ungraded-till.ngrok-free.dev';
 
 // ── Load catalog from live API (with demo fallback) ────────
 async function loadCatalog() {
