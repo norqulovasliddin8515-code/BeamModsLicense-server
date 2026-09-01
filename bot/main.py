@@ -31,8 +31,48 @@ from aiogram.enums import ParseMode
 
 from bot.config import BOT_TOKEN, WEBHOOK_PORT, WEB_APP_URL
 from bot import database as db
-from bot.handlers import admin, user, ai_assistant
+from bot.handlers import admin, user, ai_assistant, subscription
 from bot.handlers import payment as pay_handler
+
+
+# ─────────────────────────────────────────────────────────────────────
+#  Kunlik cron: muddati o'tgan obunalarni tekshirish
+# ─────────────────────────────────────────────────────────────────────
+
+async def _subscription_expiry_cron(bot: Bot) -> None:
+    """
+    Har 24 soatda bir marta muddati o'tgan obunalarni 'free' ga tushiradi.
+
+    Har foydalanuvchiga ogohlantirish xabari yuboriladi.
+    Bot ishga tushganda darhol bir marta ishlaydi,
+    keyin har 24 soatda takrorlaydi.
+    """
+    while True:
+        try:
+            expired_ids = await db.downgrade_expired_subscriptions()
+
+            if expired_ids:
+                logger.info(f"[Cron] {len(expired_ids)} ta foydalanuvchi obunasi muddati tugadi, free ga tushirildi.")
+                # Har bir foydalanuvchiga ogohlantirish yuboramiz
+                for uid in expired_ids:
+                    try:
+                        await bot.send_message(
+                            uid,
+                            "Obunangiz muddati tugadi va <b>Free</b> tarifga o'tdi.\n\n"
+                            "Davom etish uchun /upgrade buyrug'ini bosing.",
+                            parse_mode="HTML",
+                        )
+                    except Exception:
+                        pass  # Foydalanuvchi boti bloklagan bo'lishi mumkin
+            else:
+                logger.info("[Cron] Muddati tugagan obunalar topilmadi.")
+
+        except Exception as e:
+            logger.error(f"[Cron] Obuna tekshirishda xatolik: {e}")
+
+        # Keyingi tekshirishgacha 24 soat kutamiz
+        await asyncio.sleep(24 * 60 * 60)
+
 
 # ── Windows da emoji chiqishini ta'minlash ────────────────────
 if sys.platform == "win32":
@@ -202,6 +242,7 @@ async def main():
 
     # 3. Handlerlar (tartib muhim — admin birinchi)
     dp.include_router(admin.router)
+    dp.include_router(subscription.router)   # Obuna /plan /upgrade
     dp.include_router(user.router)
     dp.include_router(ai_assistant.router)
 
@@ -215,7 +256,11 @@ async def main():
     logger.info(f"API server: http://0.0.0.0:{WEBHOOK_PORT}/api/mods")
     logger.info(f"CORS allowed origins: {ALLOWED_ORIGINS}")
 
-    # 5. Polling boshlash
+    # 5. Kunlik obuna tekshiruvi cron ni background task sifatida ishga tushirish
+    asyncio.create_task(_subscription_expiry_cron(bot))
+    logger.info("[Cron] Obuna expiry checker har 24 soatda ishlaydi.")
+
+    # 6. Polling boshlash
     await bot.delete_webhook(drop_pending_updates=True)
     logger.info("Bot polling started: @BeamModsStudio_bot")
 

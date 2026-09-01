@@ -26,12 +26,25 @@ async def init_db() -> None:
         # ── users ──────────────────────────────────────────────
         await db.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id          INTEGER PRIMARY KEY,   -- Telegram user_id
-                name        TEXT    NOT NULL,
-                username    TEXT,
-                joined_at   TEXT    DEFAULT (datetime('now'))
+                id                   INTEGER PRIMARY KEY,   -- Telegram user_id
+                name                 TEXT    NOT NULL,
+                username             TEXT,
+                joined_at            TEXT    DEFAULT (datetime('now')),
+                subscription_tier    TEXT    DEFAULT 'free',   -- 'free' | 'pro' | 'max'
+                subscription_expire  TEXT    DEFAULT NULL       -- ISO date, NULL = unlimited (free)
             )
         """)
+
+        # Mavjud users jadvaliga yangi ustunlarni qo'shish (migratsiya)
+        # Agar ustun allaqachon mavjud bo'lsa, xatolik chiqmaydi
+        for col, defn in [
+            ("subscription_tier",   "TEXT DEFAULT 'free'"),
+            ("subscription_expire", "TEXT DEFAULT NULL"),
+        ]:
+            try:
+                await db.execute(f"ALTER TABLE users ADD COLUMN {col} {defn}")
+            except Exception:
+                pass  # Ustun allaqachon mavjud
 
         # ── mods ───────────────────────────────────────────────
         await db.execute("""
@@ -136,6 +149,145 @@ async def upsert_user(user_id: int, name: str, username: Optional[str] = None) -
             (user_id, name, username),
         )
         await db.commit()
+
+
+# ═══════════════════════════════════════════════════════════════
+#  SUBSCRIPTION  —  Obuna tizimi
+# ═══════════════════════════════════════════════════════════════
+
+# Obuna darajalari va ularning ruxsatlari
+TIERS = {
+    "free": {
+        "name":        "Free",
+        "emoji":       "🆓",
+        "mods_limit":  3,          # Oyiga yuklab olish limiti
+        "ai_access":   False,      # AI maslahatchi
+        "price_uzs":   0,
+    },
+    "pro": {
+        "name":        "Pro",
+        "emoji":       "⭐",
+        "mods_limit":  20,
+        "ai_access":   True,
+        "price_uzs":   29_900,
+    },
+    "max": {
+        "name":        "Max",
+        "emoji":       "💎",
+        "mods_limit":  999,        # Cheksiz
+        "ai_access":   True,
+        "price_uzs":   59_900,
+    },
+}
+
+
+async def get_subscription(user_id: int) -> Dict[str, Any]:
+    """
+    Foydalanuvchining obuna ma'lumotlarini qaytaradi.
+
+    Qaytish: {
+        "tier": "free"|"pro"|"max",
+        "expire": "2026-09-30"|None,
+        "is_active": True|False,  # Muddati o'tganmi?
+        "info": TIERS[tier]       # Tier to'liq tavsifi
+    }
+    """
+    from datetime import date
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT subscription_tier, subscription_expire FROM users WHERE id=?",
+            (user_id,),
+        )
+        row = await cur.fetchone()
+
+    if not row:
+        # Foydalanuvchi bazada yo'q — free deb qaytaramiz
+        return {"tier": "free", "expire": None, "is_active": True, "info": TIERS["free"]}
+
+    tier   = row["subscription_tier"] or "free"
+    expire = row["subscription_expire"]  # "YYYY-MM-DD" yoki None
+
+    # Muddatini tekshirish
+    if expire and date.fromisoformat(expire) < date.today():
+        is_active = False   # Muddati o'tgan — hali bazada pro/max lekin o'chiq
+        tier      = "free"  # Effektiv tier free
+    else:
+        is_active = True
+
+    return {
+        "tier":      tier,
+        "expire":    expire,
+        "is_active": is_active,
+        "info":      TIERS.get(tier, TIERS["free"]),
+    }
+
+
+async def upgrade_subscription(user_id: int, tier: str, days: int = 30) -> str:
+    """
+    To'lov muvaffaqiyatli bo'lgandan keyin chaqiriladi.
+
+    Foydalanuvchi obunasini 'pro' yoki 'max' ga yangilaydi
+    va muddatni bugundan boshlab `days` kundan keyin qo'yadi.
+
+    Qaytish: yangi expire sanasi ('YYYY-MM-DD')
+    """
+    from datetime import date, timedelta
+
+    if tier not in ("pro", "max"):
+        raise ValueError(f"Noto'g'ri tier: {tier}. 'pro' yoki 'max' bo'lishi kerak.")
+
+    expire_date = (date.today() + timedelta(days=days)).isoformat()
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        # Foydalanuvchi mavjud bo'lmasa minimal entry yaratamiz
+        await db.execute(
+            """INSERT INTO users (id, name, subscription_tier, subscription_expire)
+               VALUES (?,?,?,?)
+               ON CONFLICT(id) DO UPDATE SET
+                   subscription_tier   = excluded.subscription_tier,
+                   subscription_expire = excluded.subscription_expire""",
+            (user_id, "User", tier, expire_date),
+        )
+        await db.commit()
+
+    return expire_date
+
+
+async def downgrade_expired_subscriptions() -> List[int]:
+    """
+    Muddati o'tgan barcha obunalarni 'free' ga tushiradi.
+
+    Har kuni bir marta chaqiriladi (background cron).
+    Qaytish: downgrade qilingan user_id lar ro'yxati.
+    """
+    from datetime import date
+
+    today = date.today().isoformat()
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        # Muddati o'tgan foydalanuvchilarni topamiz
+        cur = await db.execute(
+            """SELECT id FROM users
+               WHERE subscription_tier != 'free'
+                 AND subscription_expire IS NOT NULL
+                 AND subscription_expire < ?""",
+            (today,),
+        )
+        expired_ids = [row[0] for row in await cur.fetchall()]
+
+        if expired_ids:
+            # Barchasini free ga tushiramiz
+            await db.execute(
+                f"""UPDATE users
+                    SET subscription_tier='free', subscription_expire=NULL
+                    WHERE id IN ({','.join('?' * len(expired_ids))})""",
+                expired_ids,
+            )
+            await db.commit()
+
+    return expired_ids
 
 
 # ═══════════════════════════════════════════════════════════════
