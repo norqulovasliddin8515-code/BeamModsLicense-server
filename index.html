@@ -556,15 +556,9 @@
     </div>
     <p class="sheet-desc" id="sheetDesc">—</p>
 
-    <!-- Payment method selector (shown when price > 0) -->
-    <div class="pay-methods" id="payMethods">
-        <div class="pay-method active" onclick="selectPayMethod('click', this)">💳 Click</div>
-        <div class="pay-method"        onclick="selectPayMethod('payme', this)">🟢 Payme</div>
-    </div>
-
     <div class="sheet-action-row">
         <span class="price-big" id="sheetPriceBig">0 UZS</span>
-        <button class="cta-btn" id="sheetCtaBtn" onclick="buyCurrent()">Sotib olish</button>
+        <button class="cta-btn" id="sheetCtaBtn" onclick="downloadCurrent()">⬇️ Yuklab olish</button>
     </div>
 </div>
 
@@ -980,12 +974,10 @@ function openSheet(modId) {
     badge.innerText  = priceStr;
     badge.className  = `badge ${isFree ? 'badge-free' : 'badge-paid'}`;
 
+    // Har doim "Yuklab olish" tugmasi
     const cta = document.getElementById('sheetCtaBtn');
-    cta.innerText  = isFree ? '⬇️ Bepul yuklab olish' : '🛒 Sotib olish';
-    cta.className  = `cta-btn ${isFree ? 'free' : ''}`;
-
-    // Hide payment selector for free mods
-    document.getElementById('payMethods').style.display = isFree ? 'none' : 'flex';
+    cta.innerText = '⬇️ Yuklab olish';
+    cta.className = 'cta-btn';
 
     document.getElementById('sheetBackdrop').classList.add('open');
     document.getElementById('modSheet').classList.add('open');
@@ -998,29 +990,29 @@ function closeSheet() {
     currentMod = null;
 }
 
-function selectPayMethod(method, el) {
-    selectedPay = method;
-    document.querySelectorAll('.pay-method').forEach(e => e.classList.remove('active'));
-    el.classList.add('active');
-}
-
-function buyCurrent() {
+function downloadCurrent() {
     if (!currentMod) return;
 
-    // Sotib olish signalini botga yuborish
+    // Bot ga "download_mod" signali yuboramiz
+    // Bot shu signalni qabul qilib, faylni to'g'ridan DM da yuboradi
     const payload = JSON.stringify({
-        action:         'buy_mod',
-        mod_id:         currentMod.id,
-        payment_method: currentMod.price === 0 ? 'free' : selectedPay,
+        action: 'download_mod',
+        mod_id: currentMod.id,
     });
 
     tg.HapticFeedback.notificationOccurred('success');
-    closeSheet();
 
-    // Bot ga yuboramiz va WebApp ni yopamiz
-    // (Bot to'lov havolasini DM da yuboradi)
+    // Tugmani yuklanmoqda holatiga o'tkazamiz
+    const btn = document.getElementById('sheetCtaBtn');
+    btn.innerText = '⏳ Yuborilmoqda...';
+    btn.disabled = true;
+
+    // Bot ga yuboramiz va 1.5 sek keyin yopamiz
     tg.sendData(payload);
-    tg.close();
+    setTimeout(() => {
+        closeSheet();
+        tg.close();
+    }, 1500);
 }
 
 // ── My Orders ─────────────────────────────────────────────

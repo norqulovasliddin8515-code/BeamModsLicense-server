@@ -82,94 +82,94 @@ async def cmd_my_orders(message: types.Message):
 # ── TWA dan kelgan web_app_data ────────────────────────────────────────────────
 
 @router.message(F.web_app_data)
-async def handle_web_app_data(message: types.Message):
+async def handle_web_app_data(message: types.Message, bot):
     """
     Frontend (index.html) dan kelgan JSON ma'lumotni qayta ishlaydi.
-    Qo'llab-quvvatlanadigan action lar:
-      - get_catalog   : Barcha modlarni JSON qaytaradi (API o'rniga)
-      - buy_mod       : Buyurtma yaratadi va to'lov havolasini yuboradi
-      - ai_query      : AI ga savol yuboradi
+
+    Qo'llab-quvvatlanadigan actionlar:
+      - download_mod : Faylni to'g'ridan Telegram DM da yuboradi (file_id orqali)
+      - get_orders   : Foydalanuvchi yuklab olgan modlar ro'yxati
+      - open_ai      : AI maslahatchi ochish
     """
     try:
         data = json.loads(message.web_app_data.data)
     except json.JSONDecodeError:
-        await message.answer("❗ Noto'g'ri ma'lumot formati.")
+        await message.answer("Noto'g'ri ma'lumot formati.")
         return
 
-    action = data.get("action")
+    action  = data.get("action")
+    user_id = message.from_user.id
 
-    # ── Katalog so'rovi ──────────────────────────────────────────────────────
-    if action == "get_catalog":
-        mods = await db.get_all_mods(category=data.get("category"))
-        # Haqiqiy loyihada bu yerda API endpoint ishlatiladi; MVP uchun bot xabar beradi
-        await message.answer(
-            f"📂 Katalog: <b>{len(mods)} ta mod</b> mavjud. "
-            f"Batafsil ko'rish uchun Web App ni oching.",
-            parse_mode="HTML",
-        )
-
-    # ── Mod sotib olish ──────────────────────────────────────────────────────
-    elif action == "buy_mod":
+    # ── Yuklab olish — asosiy funksiya ──────────────────────────────────────
+    if action == "download_mod":
         mod_id = data.get("mod_id")
-        payment_method = data.get("payment_method", "click")
+        mod    = await db.get_mod_by_id(mod_id)
 
-        mod = await db.get_mod_by_id(mod_id)
         if not mod:
-            await message.answer("❗ Mod topilmadi.")
+            await message.answer("Mod topilmadi. Iltimos, katalogni yangilang.")
             return
 
-        # Avval sotib olganmi tekshirish
-        already_bought = await db.has_user_purchased(message.from_user.id, mod_id)
-        if already_bought:
+        # Demo mod (real file_id yo'q) ni tekshirish
+        if not mod["file_id"] or mod["file_id"].startswith("demo_"):
             await message.answer(
-                f"✅ Siz bu modni allaqachon sotib olgansiz!\n"
-                f"Faylni qayta olish uchun /myfiles yuboring."
+                f"<b>{mod['name']}</b>\n\n"
+                f"Bu mod hali mavjud emas yoki demo rejimda.\n"
+                f"Tez orada qo'shiladi!",
+                parse_mode="HTML",
             )
             return
 
-        # Buyurtma yaratish
-        order_id = await db.create_order(
-            user_id        = message.from_user.id,
-            mod_id         = mod_id,
-            amount         = mod["price"],
-            payment_method = payment_method,
-        )
+        # Foydalanuvchiga modni yuborish — Telegram serveri faylni o'tkazadi,
+        # bot YUKLAB OLMAYDI, to'g'ridan-to'g'ri file_id orqali yuboradi (2GB gacha)
+        price_str = f"{mod['price']:,}".replace(",", " ") + " UZS" if mod["price"] else "Bepul"
 
-        price_formatted = f"{mod['price']:,}".replace(",", " ")
+        try:
+            await bot.send_document(
+                chat_id  = user_id,
+                document = mod["file_id"],
+                caption  = (
+                    f"<b>{mod['name']}</b>\n"
+                    f"Kategoriya: {mod['category']}   |   {price_str}\n\n"
+                    f"{mod.get('description', '')}\n\n"
+                    f"BeamModsStudio orqali yuklandi"
+                ),
+                parse_mode = "HTML",
+            )
+        except Exception as e:
+            await message.answer(
+                "Faylni yuborishda xatolik yuz berdi. "
+                "Iltimos, keyinroq urinib ko'ring."
+            )
+            print(f"[Delivery] Xatolik user={user_id} mod={mod_id}: {e}")
 
-        # To'lov havolasini yuborish (payment.py da batafsil)
-        from bot.handlers.payment import generate_payment_url
-        payment_url = await generate_payment_url(
-            order_id       = order_id,
-            amount         = mod["price"],
-            payment_method = payment_method,
-            description    = f"BeamModsStudio: {mod['name']}",
-        )
+    # ── Yuklab olingan modlar ro'yxati ──────────────────────────────────────
+    elif action == "get_orders":
+        try:
+            orders = await db.get_user_purchases(user_id)
+        except Exception:
+            orders = []
 
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(
-                text = f"💳 To'lash — {price_formatted} UZS",
-                url  = payment_url,
-            )],
-            [InlineKeyboardButton(
-                text          = "❌ Bekor qilish",
-                callback_data = f"cancel_order:{order_id}",
-            )],
-        ])
+        if not orders:
+            await message.answer(
+                "Siz hali hech qanday mod yuklamadingiz.\n"
+                "Katalogni ko'rish uchun Web App ni oching."
+            )
+        else:
+            lines = [f"<b>Yuklab olingan modlar ({len(orders)} ta):</b>\n"]
+            for o in orders:
+                lines.append(f"- {o['name']}")
+            await message.answer("\n".join(lines), parse_mode="HTML")
 
+    # ── AI maslahatchi ──────────────────────────────────────────────────────
+    elif action == "open_ai":
         await message.answer(
-            f"🛒 <b>Buyurtma #{order_id}</b>\n\n"
-            f"📦 Mod: <b>{mod['name']}</b>\n"
-            f"💵 Narx: <b>{price_formatted} UZS</b>\n"
-            f"💳 To'lov usuli: <b>{payment_method.capitalize()}</b>\n\n"
-            f"To'lash uchun quyidagi tugmani bosing 👇",
-            parse_mode   = "HTML",
-            reply_markup = markup,
+            "AI maslahatchi:\n"
+            "Savolingizni yozing va men javob beraman!",
         )
 
     # ── Noma'lum action ──────────────────────────────────────────────────────
     else:
-        await message.answer(f"❓ Noma'lum buyruq: {action}")
+        await message.answer(f"Noma'lum buyruq: {action}")
 
 
 # ── Buyurtma bekor qilish callback ────────────────────────────────────────────
