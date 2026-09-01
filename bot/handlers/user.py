@@ -37,23 +37,40 @@ async def cmd_start(message: types.Message):
     )
 
 
-    # Web App tugmasi
+    # Web App URL with user_id param
+    app_url = f"{WEB_APP_URL}?user_id={user.id}" if "?" not in WEB_APP_URL else f"{WEB_APP_URL}&user_id={user.id}"
+
+    # Web App tugmasi (Reply Keyboard)
     web_app_btn = KeyboardButton(
         text    = "🏪 BeamModsStudio ni ochish",
-        web_app = WebAppInfo(url=WEB_APP_URL),
+        web_app = WebAppInfo(url=app_url),
     )
     markup = ReplyKeyboardMarkup(
         keyboard         = [[web_app_btn]],
         resize_keyboard  = True,
     )
 
+    # Inline tugma (Chat ichida ham ochish uchun)
+    inline_markup = InlineKeyboardMarkup(
+        inline_keyboard = [
+            [InlineKeyboardButton(
+                text    = "🚀 Do'konni ochish (Mini App)",
+                web_app = WebAppInfo(url=app_url),
+            )],
+            [InlineKeyboardButton(
+                text    = "⭐ Obuna rejalari (/plan)",
+                callback_data = "show_plans",
+            )]
+        ]
+    )
+
     await message.answer(
         f"🎮 Xush kelibsiz, <b>{user.first_name}</b>!\n\n"
         f"<b>BeamModsStudio</b> — BeamNG.drive uchun premium modlar, "
         f"xaritalar va 3D modellar do'koni.\n\n"
-        f"👇 Katalogni ochish uchun tugmani bosing:",
+        f"👇 Katalogni ochish uchun quyidagi tugmani bosing:",
         parse_mode  = "HTML",
-        reply_markup = markup,
+        reply_markup = inline_markup,
     )
 
 

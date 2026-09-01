@@ -585,6 +585,52 @@ if (tg.colorScheme === 'light') {
     document.body.classList.add('tg-light');
 }
 
+// ── Foydalanuvchi ID sini olish (bir nechta usul) ──────────
+function getTelegramUserId() {
+    // 1-usul: initDataUnsafe.user.id (eng to'g'ri)
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+        const id = window.Telegram.WebApp.initDataUnsafe.user.id;
+        try { localStorage.setItem('beam_user_id', id); } catch (_) {}
+        return id;
+    }
+
+    // 2-usul: initData string-dan parse qilish
+    if (window.Telegram?.WebApp?.initData) {
+        try {
+            const params = new URLSearchParams(window.Telegram.WebApp.initData);
+            const userStr = params.get('user');
+            if (userStr) {
+                const user = JSON.parse(decodeURIComponent(userStr));
+                if (user && user.id) {
+                    try { localStorage.setItem('beam_user_id', user.id); } catch (_) {}
+                    return user.id;
+                }
+            }
+        } catch (e) {
+            console.warn('initData parse error:', e);
+        }
+    }
+
+    // 3-usul: URL parametridan olish (?user_id=12345678)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlUserId = urlParams.get('user_id') || urlParams.get('tgWebAppUserId');
+    if (urlUserId) {
+        const id = parseInt(urlUserId);
+        if (id) {
+            try { localStorage.setItem('beam_user_id', id); } catch (_) {}
+            return id;
+        }
+    }
+
+    // 4-usul: Cached localStorage dan olish
+    try {
+        const cached = localStorage.getItem('beam_user_id');
+        if (cached) return parseInt(cached);
+    } catch (_) {}
+
+    return null;
+}
+
 // ── State ──────────────────────────────────────────────────
 let allMods         = [];
 let currentMod      = null;
@@ -994,15 +1040,33 @@ function closeSheet() {
     currentMod = null;
 }
 
-function downloadCurrent() {
+async function downloadCurrent() {
     if (!currentMod) return;
 
-    const btn    = document.getElementById('sheetCtaBtn');
-    const userId = tg.initDataUnsafe?.user?.id;
+    const btn = document.getElementById('sheetCtaBtn');
+    const userId = getTelegramUserId();
 
+    console.log('[Download] userId:', userId, '| modId:', currentMod.id);
+
+    // Agar userId topilmasa va tg.sendData mavjud bo'lsa -> sendData orqali yuboramiz
     if (!userId) {
-        btn.innerText = '❌ Foydalanuvchi topilmadi';
-        setTimeout(() => { btn.innerText = '⬇️ Yuklab olish'; btn.disabled = false; }, 2000);
+        if (window.Telegram?.WebApp?.sendData) {
+            btn.innerText = '⏳ Botga yuborilmoqda...';
+            btn.disabled = true;
+            tg.HapticFeedback?.notificationOccurred?.('success');
+            tg.sendData(JSON.stringify({
+                action: 'download_mod',
+                mod_id: currentMod.id,
+            }));
+            setTimeout(() => {
+                closeSheet();
+                tg.close();
+            }, 1200);
+            return;
+        }
+
+        btn.innerText = '⚠️ Telegram botdan oching';
+        setTimeout(() => { btn.innerText = '⬇️ Yuklab olish'; btn.disabled = false; }, 2500);
         return;
     }
 
@@ -1010,38 +1074,32 @@ function downloadCurrent() {
     btn.innerText = '⏳ Yuborilmoqda...';
     btn.disabled  = true;
 
-    // ngrok URL yoki bo'sh string (Vercel proxy orqali)
-    const apiBase = (typeof API_URL !== 'undefined' && API_URL) ? API_URL : '';
-
-    fetch(`${apiBase}/api/download`, {
-        method:  'POST',
-        headers: {
-            'Content-Type':              'application/json',
-            'ngrok-skip-browser-warning': 'true',
-        },
-        body: JSON.stringify({
-            mod_id:  currentMod.id,
-            user_id: userId,
-        }),
-    })
-    .then(r => r.json())
-    .then(data => {
+    // 1-USUL: Vercel serverless /api/download (eng tez, 100% ishonchli, ngrok shart emas)
+    try {
+        const res = await fetch('/api/download', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                mod_id:  currentMod.id,
+                user_id: userId,
+            }),
+        });
+        const data = await res.json();
         if (data.ok) {
-            // Muvaffaqiyat — DM ga yuborildi, Mini App ochiq qoladi
             btn.innerText = '✅ Yuborildi! Chat-ni oching';
             btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
-            tg.HapticFeedback.notificationOccurred('success');
+            tg.HapticFeedback?.notificationOccurred?.('success');
 
-            // 3 sek keyin qayta asl holatiga qaytarish
             setTimeout(() => {
                 btn.innerText = '⬇️ Yuklab olish';
                 btn.disabled  = false;
                 btn.style.background = '';
                 closeSheet();
             }, 3000);
-
+            return;
         } else if (data.error === 'demo') {
-            // Demo mod
             btn.innerText = '🚧 Tez orada qo\'shiladi!';
             btn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
             setTimeout(() => {
@@ -1049,27 +1107,66 @@ function downloadCurrent() {
                 btn.disabled  = false;
                 btn.style.background = '';
             }, 2500);
-
-        } else {
-            btn.innerText = '❌ Xatolik — qayta urinib ko\'ring';
-            btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-            setTimeout(() => {
-                btn.innerText = '⬇️ Yuklab olish';
-                btn.disabled  = false;
-                btn.style.background = '';
-            }, 2500);
+            return;
         }
-    })
-    .catch(() => {
-        // Tarmoq xatosi (ngrok o'chiq bo'lsa)
-        btn.innerText = '⚠️ Server bilan aloqa yo\'q';
-        btn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+    } catch (e) {
+        console.warn('Vercel /api/download failed, trying local ngrok fallback...', e);
+    }
+
+    // 2-USUL: ngrok API orqali urinish
+    if (typeof API_URL !== 'undefined' && API_URL) {
+        try {
+            const res = await fetch(`${API_URL}/api/download`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type':              'application/json',
+                    'ngrok-skip-browser-warning': 'true',
+                },
+                body: JSON.stringify({
+                    mod_id:  currentMod.id,
+                    user_id: userId,
+                }),
+            });
+            const data = await res.json();
+            if (data.ok) {
+                btn.innerText = '✅ Yuborildi! Chat-ni oching';
+                btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+                tg.HapticFeedback?.notificationOccurred?.('success');
+
+                setTimeout(() => {
+                    btn.innerText = '⬇️ Yuklab olish';
+                    btn.disabled  = false;
+                    btn.style.background = '';
+                    closeSheet();
+                }, 3000);
+                return;
+            }
+        } catch (e) {
+            console.warn('ngrok download failed, trying sendData fallback...', e);
+        }
+    }
+
+    // 3-USUL: oxirgi zaxira usuli — tg.sendData (aniq ishlaydi)
+    if (window.Telegram?.WebApp?.sendData) {
+        btn.innerText = '⏳ Botga yuborilmoqda...';
+        tg.sendData(JSON.stringify({
+            action: 'download_mod',
+            mod_id: currentMod.id,
+        }));
         setTimeout(() => {
-            btn.innerText = '⬇️ Yuklab olish';
-            btn.disabled  = false;
-            btn.style.background = '';
-        }, 2500);
-    });
+            closeSheet();
+            tg.close();
+        }, 1200);
+        return;
+    }
+
+    btn.innerText = '❌ Xatolik — qayta urinib ko\'ring';
+    btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+    setTimeout(() => {
+        btn.innerText = '⬇️ Yuklab olish';
+        btn.disabled  = false;
+        btn.style.background = '';
+    }, 2500);
 }
 
 // ── My Orders ─────────────────────────────────────────────
