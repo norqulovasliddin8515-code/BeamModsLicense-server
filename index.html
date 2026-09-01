@@ -836,7 +836,7 @@ function renderShortsFeed() {
                 <div class="short-mod-name">${mod.name}</div>
                 <div class="short-mod-cat">📂 ${mod.category} · ${(mod.price||0).toLocaleString('uz-UZ')} UZS</div>
                 <button class="short-buy-btn" onclick="openSheet(${mod.id})">
-                    🛒 Shu modni sotib ol
+                    ⬇️ Yuklab olish
                 </button>
             </div>`;
 
@@ -876,7 +876,7 @@ function initAllPlayers() {
         ytPlayers[i] = new YT.Player(`yt-player-${i}`, {
             videoId:    ytId,
             playerVars: {
-                autoplay:       0,
+                autoplay:       0,    // Hech qachon avtomatik boshlanmasin
                 controls:       0,
                 loop:           1,
                 playlist:       ytId,
@@ -890,7 +890,11 @@ function initAllPlayers() {
             width:  '100%',
             events: {
                 onReady: (e) => {
-                    if (i === currentShortIdx) e.target.playVideo();
+                    // MUHIM: faqat Shorts tab ochiq VA bu birinchi video bo'lsa play qilamiz
+                    // currentTab 'catalog' bo'lsa — hech qachon autoplay qilmasin!
+                    if (currentTab === 'shorts' && i === currentShortIdx) {
+                        e.target.playVideo();
+                    }
                 },
             },
         });
@@ -993,26 +997,79 @@ function closeSheet() {
 function downloadCurrent() {
     if (!currentMod) return;
 
-    // Bot ga "download_mod" signali yuboramiz
-    // Bot shu signalni qabul qilib, faylni to'g'ridan DM da yuboradi
-    const payload = JSON.stringify({
-        action: 'download_mod',
-        mod_id: currentMod.id,
-    });
+    const btn    = document.getElementById('sheetCtaBtn');
+    const userId = tg.initDataUnsafe?.user?.id;
 
-    tg.HapticFeedback.notificationOccurred('success');
+    if (!userId) {
+        btn.innerText = '❌ Foydalanuvchi topilmadi';
+        setTimeout(() => { btn.innerText = '⬇️ Yuklab olish'; btn.disabled = false; }, 2000);
+        return;
+    }
 
-    // Tugmani yuklanmoqda holatiga o'tkazamiz
-    const btn = document.getElementById('sheetCtaBtn');
+    // Tugmani yuklash holatiga o'tkazamiz — Mini App YOPILMAYDI
     btn.innerText = '⏳ Yuborilmoqda...';
-    btn.disabled = true;
+    btn.disabled  = true;
 
-    // Bot ga yuboramiz va 1.5 sek keyin yopamiz
-    tg.sendData(payload);
-    setTimeout(() => {
-        closeSheet();
-        tg.close();
-    }, 1500);
+    // ngrok URL yoki bo'sh string (Vercel proxy orqali)
+    const apiBase = (typeof API_URL !== 'undefined' && API_URL) ? API_URL : '';
+
+    fetch(`${apiBase}/api/download`, {
+        method:  'POST',
+        headers: {
+            'Content-Type':              'application/json',
+            'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({
+            mod_id:  currentMod.id,
+            user_id: userId,
+        }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            // Muvaffaqiyat — DM ga yuborildi, Mini App ochiq qoladi
+            btn.innerText = '✅ Yuborildi! Chat-ni oching';
+            btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+            tg.HapticFeedback.notificationOccurred('success');
+
+            // 3 sek keyin qayta asl holatiga qaytarish
+            setTimeout(() => {
+                btn.innerText = '⬇️ Yuklab olish';
+                btn.disabled  = false;
+                btn.style.background = '';
+                closeSheet();
+            }, 3000);
+
+        } else if (data.error === 'demo') {
+            // Demo mod
+            btn.innerText = '🚧 Tez orada qo\'shiladi!';
+            btn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+            setTimeout(() => {
+                btn.innerText = '⬇️ Yuklab olish';
+                btn.disabled  = false;
+                btn.style.background = '';
+            }, 2500);
+
+        } else {
+            btn.innerText = '❌ Xatolik — qayta urinib ko\'ring';
+            btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+            setTimeout(() => {
+                btn.innerText = '⬇️ Yuklab olish';
+                btn.disabled  = false;
+                btn.style.background = '';
+            }, 2500);
+        }
+    })
+    .catch(() => {
+        // Tarmoq xatosi (ngrok o'chiq bo'lsa)
+        btn.innerText = '⚠️ Server bilan aloqa yo\'q';
+        btn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        setTimeout(() => {
+            btn.innerText = '⬇️ Yuklab olish';
+            btn.disabled  = false;
+            btn.style.background = '';
+        }, 2500);
+    });
 }
 
 // ── My Orders ─────────────────────────────────────────────

@@ -210,8 +210,77 @@ def build_web_app(bot: Bot) -> web.Application:
     app.router.add_get("/api/mods/{id}",  api_get_mod)
 
     # OPTIONS (preflight) uchun ham route qo'shamiz
-    app.router.add_options("/api/mods",      lambda r: web.Response(status=204))
-    app.router.add_options("/api/mods/{id}", lambda r: web.Response(status=204))
+    app.router.add_options("/api/mods",         lambda r: web.Response(status=204))
+    app.router.add_options("/api/mods/{id}",    lambda r: web.Response(status=204))
+    app.router.add_options("/api/download",     lambda r: web.Response(status=204))
+
+    # ── Download Endpoint ──────────────────────────────────────
+    # Mini App yopilmasin uchun sendData() o'rniga bu endpoint ishlatiladi.
+    # Frontend: fetch('/api/download', {method:'POST', body:{mod_id, user_id}})
+    async def api_download(request: web.Request) -> web.Response:
+        """
+        POST /api/download
+        Body: { mod_id: int, user_id: int }
+
+        Bot faylni to'g'ridan user DM ga yuboradi (file_id orqali, yuklamaydi).
+        Mini App yopilmaydi.
+        """
+        try:
+            body    = await request.json()
+            mod_id  = int(body.get("mod_id", 0))
+            user_id = int(body.get("user_id", 0))
+        except Exception:
+            return web.Response(
+                text=json.dumps({"ok": False, "error": "mod_id va user_id kerak"}),
+                content_type="application/json", status=400,
+            )
+
+        if not mod_id or not user_id:
+            return web.Response(
+                text=json.dumps({"ok": False, "error": "Noto'g'ri parametrlar"}),
+                content_type="application/json", status=400,
+            )
+
+        mod = await db.get_mod_by_id(mod_id)
+        if not mod:
+            return web.Response(
+                text=json.dumps({"ok": False, "error": "Mod topilmadi"}),
+                content_type="application/json", status=404,
+            )
+
+        # Demo mod tekshiruvi
+        if not mod["file_id"] or mod["file_id"].startswith("demo_"):
+            return web.Response(
+                text=json.dumps({"ok": False, "error": "demo", "name": mod["name"]}),
+                content_type="application/json", status=200,
+            )
+
+        # Faylni Telegram orqali yuborish
+        try:
+            price_str = f"{mod['price']:,}".replace(",", " ") + " UZS" if mod["price"] else "Bepul"
+            await bot.send_document(
+                chat_id   = user_id,
+                document  = mod["file_id"],
+                caption   = (
+                    f"<b>{mod['name']}</b>\n"
+                    f"Kategoriya: {mod['category']}   |   {price_str}\n\n"
+                    f"{mod.get('description', '')}"
+                ),
+                parse_mode = "HTML",
+            )
+            logger.info(f"[Download] user={user_id} mod={mod_id} ({mod['name']})")
+            return web.Response(
+                text=json.dumps({"ok": True, "name": mod["name"]}),
+                content_type="application/json",
+            )
+        except Exception as e:
+            logger.error(f"[Download] Xatolik user={user_id} mod={mod_id}: {e}")
+            return web.Response(
+                text=json.dumps({"ok": False, "error": str(e)}),
+                content_type="application/json", status=500,
+            )
+
+    app.router.add_post("/api/download", api_download)
 
     # ── To'lov Webhooklar ──────────────────────────────────────
     async def click_prepare(r):  return await pay_handler.click_prepare(r)
