@@ -1,7 +1,19 @@
 {
   "ok": true,
-  "count": 7,
+  "count": 8,
   "mods": [
+    {
+      "id": 9,
+      "name": "Hummerpolice",
+      "category": "cars",
+      "description": "BeamNG.drive mod: Hummerpolice",
+      "price": 0,
+      "image_url": "tg_photo:AgACAgIAAyEFAATahYc0AANuapjnCCxh-gMU1Q-0FRGva78Pgh0AAicTaxscVZlJ3MsAARKa8qqXAQADAgADeQADPQQ",
+      "video_url": "",
+      "file_id": "BQACAgIAAyEFAATahYc0AANvapjnCMbwFesWlHYdCruN6UMriTYAAr-TAAIcVZlJul_jLRQUexc9BA",
+      "downloads": 0,
+      "created_at": "2026-09-03 03:18:34"
+    },
     {
       "id": 8,
       "name": "Mcqueen1",
