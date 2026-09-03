@@ -46,8 +46,9 @@ _pending_auto: dict = {}
 # Qo'lda mod qo'shish uchun (eski /addmod FSM)
 _pending_file: dict = {}   # { admin_id: {file_id, file_name, size_mb} }
 
-# Auto-create timer (rasm va fayl 30 sek ichida kelishi kerak)
-_auto_timer_task = None
+# Dublikat yaratilishning oldini olish uchun flag
+# asyncio single-thread bo'lgani uchun await-siz kod atomik ishlaydi
+_auto_creating: bool = False
 
 
 def _guess_category(file_name: str) -> str:
@@ -84,56 +85,82 @@ def _clean_mod_name(file_name: str) -> str:
 async def _try_auto_create(bot: Bot):
     """
     Agar ham rasm, ham fayl mavjud bo'lsa — avtomatik mod yaratadi.
-    Ikkisi birga kelgunga qadar kutadi.
+    
+    MUHIM: _auto_creating flag ishlatiladi — ikki parallel chaqiruv
+    bitta mod yaratmasligini kafolatlaydi.
+    asyncio single-thread: await-siz kod atomik ishlaydi.
     """
+    global _auto_creating
+
+    # 1. Ikkalasi ham borligini tekshirish (await YO'Q — atomik)
     photo_id  = _pending_auto.get("photo_id")
     file_id   = _pending_auto.get("file_id")
-    file_name = _pending_auto.get("file_name", "mod.zip")
 
     if not photo_id or not file_id:
-        return  # Hali ikkisi kelmagan — kutamiz
+        return  # Hali ikkisi kelmagan
 
-    # ── Ikkisi ham bor — mod yaratamiz! ──────────────────────
-    mod_name    = _clean_mod_name(file_name)
-    category    = _guess_category(file_name)
-    description = f"BeamNG.drive mod: {mod_name}"
-    size_mb     = _pending_auto.get("size_mb", 0)
+    # 2. Dublikat yaratilishining oldini olish (await YO'Q — atomik)
+    if _auto_creating:
+        logger.info("[Auto] Allaqachon yaratilmoqda, o'tkazib yuborildi")
+        return
 
-    # Rasm URL sifatida Telegram photo file_id saqlaymiz
-    # Mini App /api/photo/ endpoint orqali ko'rsatadi
-    image_url = f"tg_photo:{photo_id}"
+    _auto_creating = True
 
-    mod_id = await db.add_mod(
-        name        = mod_name,
-        category    = category,
-        description = description,
-        price       = 0,
-        image_url   = image_url,
-        video_url   = "",
-        file_id     = file_id,
-    )
+    # 3. _pending_auto ni darhol tozalash (await KELGUNCHA — atomik)
+    #    Shunday qilib ikkinchi chaqiruv bo'sh dict ko'radi va qaytadi
+    file_name = _pending_auto.pop("file_name", "mod.zip")
+    size_mb   = _pending_auto.pop("size_mb", 0)
+    _pending_auto.clear()  # photo_id va file_id ham tozalanadi
 
-    # Pending ni tozalash
-    _pending_auto.clear()
+    try:
+        # ── Ikkisi ham bor — mod yaratamiz! ──────────────────
+        mod_name    = _clean_mod_name(file_name)
+        category    = _guess_category(file_name)
+        description = f"BeamNG.drive mod: {mod_name}"
 
-    # Admin DM ga tasdiqlash
-    await bot.send_message(
-        chat_id=ADMIN_ID,
-        text=(
-            f"<b>Mod avtomatik qo'shildi!</b>\n\n"
-            f"ID: <code>{mod_id}</code>\n"
-            f"Nom: <b>{mod_name}</b>\n"
-            f"Kategoriya: {category}\n"
-            f"Fayl: <code>{file_name}</code>  ({size_mb} MB)\n\n"
-            f"Katalog yangilanmoqda..."
-        ),
-        parse_mode="HTML",
-    )
+        # Rasm URL sifatida Telegram photo file_id saqlaymiz
+        # tg_photo: prefiksi — api/index.py va main.py /api/photo/ endpoint
+        # orqali to'g'ri CDN URL ga resolve qilinadi
+        image_url = f"tg_photo:{photo_id}"
 
-    logger.info(f"[Auto] Mod #{mod_id} '{mod_name}' avtomatik qo'shildi")
+        mod_id = await db.add_mod(
+            name        = mod_name,
+            category    = category,
+            description = description,
+            price       = 0,
+            image_url   = image_url,
+            video_url   = "",
+            file_id     = file_id,
+        )
 
-    # GitHub/Vercel ga push
-    await sync_mods_to_github()
+        # Admin DM ga tasdiqlash
+        await bot.send_message(
+            chat_id=ADMIN_ID,
+            text=(
+                f"<b>Mod avtomatik qo'shildi! ✅</b>\n\n"
+                f"ID: <code>{mod_id}</code>\n"
+                f"Nom: <b>{mod_name}</b>\n"
+                f"Kategoriya: {category}\n"
+                f"Fayl: <code>{file_name}</code>  ({size_mb} MB)\n\n"
+                f"Katalog yangilanmoqda..."
+            ),
+            parse_mode="HTML",
+        )
+
+        logger.info(f"[Auto] Mod #{mod_id} '{mod_name}' avtomatik qo'shildi")
+
+        # GitHub/Vercel ga push
+        await sync_mods_to_github()
+
+    except Exception as e:
+        logger.error(f"[Auto] Xatolik: {e}")
+        await bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"⚠️ Mod qo'shishda xatolik:\n<code>{e}</code>",
+            parse_mode="HTML",
+        )
+    finally:
+        _auto_creating = False
 
 
 # ─────────────────────────────────────────────
@@ -417,21 +444,19 @@ async def step_image(message: types.Message, state: FSMContext):
 # ═══════════════════════════════════════════════════════════════
 
 async def sync_mods_to_github():
-    """Barcha modlarni mods.json ga eksport qilib, GitHub/Vercel ga push qiladi."""
+    """
+    Barcha modlarni mods.json ga eksport qilib, GitHub/Vercel ga push qiladi.
+    
+    MUHIM: image_url ni o'zgartirmaymiz — tg_photo: prefiksi mods.json da
+    saqlanadi. Vercel api/index.py GET /api/mods da /api/photo/{id} ga
+    convert qiladi. Frontend ham shu thumbnail ni ishlatadi.
+    """
     try:
         import json, subprocess
 
         mods = await db.get_all_mods()
-
-        # Rasm URL larni to'g'rilash — tg_photo: prefixli rasmlar uchun
-        # Telegram Bot API getFile URL yasaymiz
-        for mod in mods:
-            img = mod.get("image_url", "")
-            if img.startswith("tg_photo:"):
-                photo_file_id = img.replace("tg_photo:", "")
-                mod["image_url"] = f"https://api.telegram.org/bot{BOT_TOKEN}/getFile?file_id={photo_file_id}"
-                # Thumbnail sifatida to'g'ridan Telegram CDN ishlatamiz
-                mod["thumbnail"] = f"/api/photo/{photo_file_id}"
+        # image_url ni O'ZGARTIRMAYMIZ — tg_photo: xom holda saqlanadi
+        # api/index.py (Vercel) GET /api/mods da resolve qiladi
 
         with open("mods.json", "w", encoding="utf-8") as f:
             json.dump({"ok": True, "count": len(mods), "mods": mods}, f, indent=2, ensure_ascii=False)

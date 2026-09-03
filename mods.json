@@ -1,32 +1,18 @@
 {
   "ok": true,
-  "count": 8,
+  "count": 7,
   "mods": [
-    {
-      "id": 7,
-      "name": "Mcqueen1",
-      "category": "cars",
-      "description": "BeamNG.drive mod: Mcqueen1",
-      "price": 0,
-      "image_url": "https://api.telegram.org/bot8665911741:AAHg-R9XtJjDVaGxX6H5eG7AB8koA95YH3g/getFile?file_id=AgACAgIAAyEFAATahYc0AANsapji0RXDzpuK5rhAQ1N2gsz56MoAAlIQaxtKeaFJYQhtLaLornwBAAMCAAN5AAM9BA",
-      "video_url": "",
-      "file_id": "BQACAgIAAyEFAATahYc0AANtapji0bDPHLJpUZLgWzicxB7wUFMAAjKOAAIvColJsjyYdPDyCgg9BA",
-      "downloads": 0,
-      "created_at": "2026-09-03 03:00:35",
-      "thumbnail": "/api/photo/AgACAgIAAyEFAATahYc0AANsapji0RXDzpuK5rhAQ1N2gsz56MoAAlIQaxtKeaFJYQhtLaLornwBAAMCAAN5AAM9BA"
-    },
     {
       "id": 8,
       "name": "Mcqueen1",
       "category": "cars",
       "description": "BeamNG.drive mod: Mcqueen1",
       "price": 0,
-      "image_url": "https://api.telegram.org/bot8665911741:AAHg-R9XtJjDVaGxX6H5eG7AB8koA95YH3g/getFile?file_id=AgACAgIAAyEFAATahYc0AANsapji0RXDzpuK5rhAQ1N2gsz56MoAAlIQaxtKeaFJYQhtLaLornwBAAMCAAN5AAM9BA",
+      "image_url": "tg_photo:AgACAgIAAyEFAATahYc0AANsapji0RXDzpuK5rhAQ1N2gsz56MoAAlIQaxtKeaFJYQhtLaLornwBAAMCAAN5AAM9BA",
       "video_url": "",
       "file_id": "BQACAgIAAyEFAATahYc0AANtapji0bDPHLJpUZLgWzicxB7wUFMAAjKOAAIvColJsjyYdPDyCgg9BA",
       "downloads": 0,
-      "created_at": "2026-09-03 03:00:35",
-      "thumbnail": "/api/photo/AgACAgIAAyEFAATahYc0AANsapji0RXDzpuK5rhAQ1N2gsz56MoAAlIQaxtKeaFJYQhtLaLornwBAAMCAAN5AAM9BA"
+      "created_at": "2026-09-03 03:00:35"
     },
     {
       "id": 6,
