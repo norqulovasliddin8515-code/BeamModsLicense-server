@@ -1,16 +1,24 @@
 """
 handlers/admin.py — Admin mod yuklash oqimi.
 
-Kanal oqimi (yangi):
-  1. Admin kanalga fayl yuboradi
-  2. Bot file_id ni ushlaydi, _pending_file ga saqlaydi (yuklab olmaydi)
-  3. Bot admin DM-iga: "Fayl tayyor! /addmod bosing" deb yozadi
-  4. Admin /addmod bosadi → FSM boshlanadi (nom, kategoriya, tavsif, narx, video, rasm)
-  5. Tayyor → bazaga yozadi
+YANGI AVTOMATIK OQIM:
+  1. Admin kanalga RASM + ZIP fayl yuboradi
+  2. Bot rasmni va zip faylni avtomatik ushlaydi
+  3. Ikkisi ham kelganda — mod avtomatik yaratiladi:
+     - Nom = zip fayl nomidan (title case, .zip olib tashlanadi)
+     - Kategoriya = fayl nomidan auto-detect (yoki default "cars")
+     - Tavsif = auto
+     - Narx = 0 (obuna tizimi ishlaydi)
+     - Rasm = Telegram photo file_id
+     - Fayl = zip file_id
+  4. mods.json yangilanib, GitHub/Vercel ga push qilinadi
 
-Guruh oqimi (avvalgi):
-  Guruhda bot admin bo'lsa ham xuddi shu /addmod orqali ishlaydi.
+QOLDA OQIM (saqlanadi):
+  /addmod — eski 6 bosqichli FSM (kerak bo'lganda ishlatiladi)
 """
+import asyncio
+import logging
+import re
 from aiogram import Router, F, Bot, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -20,36 +28,247 @@ from aiogram.types import (
     ReplyKeyboardRemove,
 )
 
-from bot.config import ADMIN_ID, ARCHIVE_GROUP_ID
+from bot.config import ADMIN_ID, ARCHIVE_GROUP_ID, BOT_TOKEN
 from bot import database as db
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 
-# ─────────────────────────────────────────────
-#  Kutayotgan faylni vaqtincha saqlash
-#  (FSM kanalda ishlamaydi, shuning uchun oddiy dict)
-# ─────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════
+#  AVTOMATIK MOD QO'SHISH TIZIMI
+# ═══════════════════════════════════════════════════════════════
 
+# Kanaldan kelgan rasm va faylni vaqtincha saqlash
+_pending_auto: dict = {}
+# Format: { "photo_id": str, "file_id": str, "file_name": str, "size_mb": float }
+
+# Qo'lda mod qo'shish uchun (eski /addmod FSM)
 _pending_file: dict = {}   # { admin_id: {file_id, file_name, size_mb} }
 
+# Auto-create timer (rasm va fayl 30 sek ichida kelishi kerak)
+_auto_timer_task = None
+
+
+def _guess_category(file_name: str) -> str:
+    """Fayl nomidan kategoriyani aniqlash."""
+    name_lower = file_name.lower()
+    if any(w in name_lower for w in ("truck", "kamaz", "maz", "daf", "scania", "volvo_truck", "lorry")):
+        return "trucks"
+    if any(w in name_lower for w in ("map", "xarita", "city", "track", "road", "terrain")):
+        return "maps"
+    if any(w in name_lower for w in ("3d", "model", "blender", "mesh", "obj", "fbx")):
+        return "3d_models"
+    return "cars"
+
+
+def _clean_mod_name(file_name: str) -> str:
+    """Zip fayl nomidan chiroyli mod nomi yasash.
+    
+    Misollar:
+      Mercedes_AMG_G63.zip       → Mercedes AMG G63
+      bmw_m5_f90_competition.zip → Bmw M5 F90 Competition
+      Nissan-GT-R-R35.zip        → Nissan GT R R35
+    """
+    # Kengaytmani olib tashlash
+    name = re.sub(r'\.(zip|rar|7z|tar\.gz)$', '', file_name, flags=re.IGNORECASE)
+    # _ va - ni probel bilan almashtirish
+    name = name.replace("_", " ").replace("-", " ")
+    # Ortiqcha probellarni tozalash
+    name = re.sub(r'\s+', ' ', name).strip()
+    # Title case (har bir so'z bosh harf bilan)
+    name = name.title()
+    return name
+
+
+async def _try_auto_create(bot: Bot):
+    """
+    Agar ham rasm, ham fayl mavjud bo'lsa — avtomatik mod yaratadi.
+    Ikkisi birga kelgunga qadar kutadi.
+    """
+    photo_id  = _pending_auto.get("photo_id")
+    file_id   = _pending_auto.get("file_id")
+    file_name = _pending_auto.get("file_name", "mod.zip")
+
+    if not photo_id or not file_id:
+        return  # Hali ikkisi kelmagan — kutamiz
+
+    # ── Ikkisi ham bor — mod yaratamiz! ──────────────────────
+    mod_name    = _clean_mod_name(file_name)
+    category    = _guess_category(file_name)
+    description = f"BeamNG.drive mod: {mod_name}"
+    size_mb     = _pending_auto.get("size_mb", 0)
+
+    # Rasm URL sifatida Telegram photo file_id saqlaymiz
+    # Mini App /api/photo/ endpoint orqali ko'rsatadi
+    image_url = f"tg_photo:{photo_id}"
+
+    mod_id = await db.add_mod(
+        name        = mod_name,
+        category    = category,
+        description = description,
+        price       = 0,
+        image_url   = image_url,
+        video_url   = "",
+        file_id     = file_id,
+    )
+
+    # Pending ni tozalash
+    _pending_auto.clear()
+
+    # Admin DM ga tasdiqlash
+    await bot.send_message(
+        chat_id=ADMIN_ID,
+        text=(
+            f"<b>Mod avtomatik qo'shildi!</b>\n\n"
+            f"ID: <code>{mod_id}</code>\n"
+            f"Nom: <b>{mod_name}</b>\n"
+            f"Kategoriya: {category}\n"
+            f"Fayl: <code>{file_name}</code>  ({size_mb} MB)\n\n"
+            f"Katalog yangilanmoqda..."
+        ),
+        parse_mode="HTML",
+    )
+
+    logger.info(f"[Auto] Mod #{mod_id} '{mod_name}' avtomatik qo'shildi")
+
+    # GitHub/Vercel ga push
+    await sync_mods_to_github()
+
 
 # ─────────────────────────────────────────────
-#  FSM Holatlari
+#  KANAL HANDLERLARI — AVTOMATIK REJIM
 # ─────────────────────────────────────────────
+
+@router.channel_post(
+    F.chat.id == ARCHIVE_GROUP_ID,
+    F.photo,
+)
+async def capture_channel_photo(message: types.Message, bot: Bot):
+    """Kanalga yuklangan rasmni ushlaydi."""
+    # Eng katta o'lchamdagi rasmni olish
+    photo = message.photo[-1]  # Oxirgi = eng katta
+    photo_id = photo.file_id
+
+    _pending_auto["photo_id"] = photo_id
+    logger.info(f"[Auto] Rasm aniqlandi: {photo_id[:30]}...")
+
+    # Rasm va fayl birga kelganmi tekshirish
+    # Kichik kutish — agar fayl ham shu-shu kelsa
+    await asyncio.sleep(2)
+    await _try_auto_create(bot)
+
+
+@router.channel_post(
+    F.chat.id == ARCHIVE_GROUP_ID,
+    F.document | F.video | F.audio,
+)
+async def capture_channel_file(message: types.Message, bot: Bot):
+    """Kanalga yuklangan faylni ushlaydi (yuklamaydi)."""
+    file_obj = message.document or message.video or message.audio
+    if not file_obj:
+        return
+
+    file_id   = file_obj.file_id
+    file_name = getattr(file_obj, "file_name", "mod.zip")
+    size_mb   = round(getattr(file_obj, "file_size", 0) / (1024 * 1024), 1)
+
+    # Avtomatik rejim uchun saqlash
+    _pending_auto["file_id"]   = file_id
+    _pending_auto["file_name"] = file_name
+    _pending_auto["size_mb"]   = size_mb
+
+    # Eski qo'lda rejim uchun ham saqlash
+    _pending_file[ADMIN_ID] = {
+        "file_id":   file_id,
+        "file_name": file_name,
+        "size_mb":   size_mb,
+    }
+
+    logger.info(f"[Auto] Fayl aniqlandi: {file_name} ({size_mb} MB)")
+
+    # Rasm va fayl birga kelganmi tekshirish
+    await asyncio.sleep(2)
+    await _try_auto_create(bot)
+
+    # Agar avtomatik yaratilmagan bo'lsa (rasm yo'q), admin ga xabar
+    if _pending_auto.get("file_id") and not _pending_auto.get("photo_id"):
+        await bot.send_message(
+            chat_id=ADMIN_ID,
+            text=(
+                f"<b>Fayl aniqlandi!</b>\n\n"
+                f"<code>{file_name}</code>   {size_mb} MB\n\n"
+                f"Avtomatik qo'shish uchun kanalga <b>rasm</b> ham yuboring.\n"
+                f"Yoki qo'lda: /addmod"
+            ),
+            parse_mode="HTML",
+        )
+
+
+# ─────────────────────────────────────────────
+#  GURUH HANDLERI (eski — saqlanadi)
+# ─────────────────────────────────────────────
+
+@router.message(
+    F.chat.id == ARCHIVE_GROUP_ID,
+    F.photo,
+)
+async def capture_group_photo(message: types.Message, bot: Bot):
+    """Guruhga yuklangan rasmni ushlaydi."""
+    photo = message.photo[-1]
+    _pending_auto["photo_id"] = photo.file_id
+    await asyncio.sleep(2)
+    await _try_auto_create(bot)
+
+
+@router.message(
+    F.chat.id == ARCHIVE_GROUP_ID,
+    F.document | F.video | F.audio,
+)
+async def capture_group_file(message: types.Message, bot: Bot, state: FSMContext):
+    """Guruhga yuklangan faylni ushlaydi."""
+    file_obj = message.document or message.video or message.audio
+    if not file_obj:
+        return
+
+    file_id   = file_obj.file_id
+    file_name = getattr(file_obj, "file_name", "mod.zip")
+    size_mb   = round(getattr(file_obj, "file_size", 0) / (1024 * 1024), 1)
+
+    _pending_auto["file_id"]   = file_id
+    _pending_auto["file_name"] = file_name
+    _pending_auto["size_mb"]   = size_mb
+
+    _pending_file[ADMIN_ID] = {
+        "file_id": file_id, "file_name": file_name, "size_mb": size_mb,
+    }
+
+    await asyncio.sleep(2)
+    await _try_auto_create(bot)
+
+    if _pending_auto.get("file_id") and not _pending_auto.get("photo_id"):
+        await bot.send_message(
+            chat_id=ADMIN_ID,
+            text=(
+                f"<b>Fayl aniqlandi!</b>\n"
+                f"<code>{file_name}</code> {size_mb} MB\n\n"
+                f"Kanalga <b>rasm</b> yuboring yoki /addmod bosing."
+            ),
+            parse_mode="HTML",
+        )
+
+
+# ═══════════════════════════════════════════════════════════════
+#  QO'LDA MOD QO'SHISH — FSM (/addmod)
+# ═══════════════════════════════════════════════════════════════
 
 class AddMod(StatesGroup):
     waiting_name        = State()
     waiting_category    = State()
     waiting_description = State()
-    waiting_price       = State()
     waiting_video       = State()
     waiting_image       = State()
 
-
-# ─────────────────────────────────────────────
-#  UI elementlari
-# ─────────────────────────────────────────────
 
 CATEGORY_KB = ReplyKeyboardMarkup(
     keyboard=[
@@ -75,93 +294,13 @@ def _cancel_kb():
     )
 
 
-# ─────────────────────────────────────────────
-#  1a. KANALDA fayl ushlanadi (channel_post)
-#     from_user yo'q, shuning uchun FSM yo'q
-#     Fayl ID ni _pending_file ga saqlab, DM ga xabar
-# ─────────────────────────────────────────────
-
-@router.channel_post(
-    F.chat.id == ARCHIVE_GROUP_ID,
-    F.document | F.video | F.audio,
-)
-async def capture_channel_file(message: types.Message, bot: Bot):
-    """Kanalga yuklangan faylni ushlaydi (yuklamaydi)."""
-    file_obj  = message.document or message.video or message.audio
-    if not file_obj:
-        return
-
-    file_id   = file_obj.file_id
-    file_name = getattr(file_obj, "file_name", "fayl")
-    size_mb   = round(getattr(file_obj, "file_size", 0) / (1024 * 1024), 1)
-
-    # Vaqtincha saqlaymiz
-    _pending_file[ADMIN_ID] = {
-        "file_id":   file_id,
-        "file_name": file_name,
-        "size_mb":   size_mb,
-    }
-
-    # Admin DM ga xabar
-    await bot.send_message(
-        chat_id=ADMIN_ID,
-        text=(
-            f"<b>Yangi fayl aniqlandi!</b>\n\n"
-            f"<code>{file_name}</code>   {size_mb} MB\n\n"
-            f"Ma'lumotlarni kiritish uchun:\n"
-            f"/addmod — bosing"
-        ),
-        parse_mode="HTML",
-    )
-
-
-# ─────────────────────────────────────────────
-#  1b. GURUHDA fayl ushlanadi (message)
-#     from_user bor, FSM darhol boshlanadi
-# ─────────────────────────────────────────────
-
-@router.message(
-    F.chat.id == ARCHIVE_GROUP_ID,
-    F.document | F.video | F.audio,
-)
-async def capture_group_file(message: types.Message, bot: Bot, state: FSMContext):
-    """Guruhga yuklangan faylni ushlaydi va FSM boshlanadi."""
-    file_obj  = message.document or message.video or message.audio
-    if not file_obj:
-        return
-
-    file_id   = file_obj.file_id
-    file_name = getattr(file_obj, "file_name", "fayl")
-    size_mb   = round(getattr(file_obj, "file_size", 0) / (1024 * 1024), 1)
-
-    _pending_file[ADMIN_ID] = {
-        "file_id":   file_id,
-        "file_name": file_name,
-        "size_mb":   size_mb,
-    }
-
-    await bot.send_message(
-        chat_id=ADMIN_ID,
-        text=(
-            f"<b>Yangi fayl aniqlandi!</b>\n\n"
-            f"<code>{file_name}</code>   {size_mb} MB\n\n"
-            f"/addmod — ma'lumotlarni kiritish"
-        ),
-        parse_mode="HTML",
-    )
-
-
-# ─────────────────────────────────────────────
-#  2. /addmod — FSM ni boshlash (Admin DM)
-# ─────────────────────────────────────────────
-
 @router.message(
     Command("addmod"),
     F.from_user.id == ADMIN_ID,
     F.chat.type == "private",
 )
 async def cmd_addmod(message: types.Message, state: FSMContext):
-    """Admin /addmod berganda FSM ni boshlaydi."""
+    """Admin /addmod berganda FSM ni boshlaydi (narxsiz — 5 bosqich)."""
     if ADMIN_ID not in _pending_file:
         await message.answer(
             "Hali fayl yuklanmagan.\n"
@@ -179,15 +318,11 @@ async def cmd_addmod(message: types.Message, state: FSMContext):
     await message.answer(
         f"<b>Mod qo'shish boshlandi!</b>\n\n"
         f"Fayl: <code>{pf['file_name']}</code>  ({pf['size_mb']} MB)\n\n"
-        f"1/6 — Mod <b>nomini</b> kiriting:",
+        f"1/5 — Mod <b>nomini</b> kiriting:",
         parse_mode="HTML",
         reply_markup=_cancel_kb(),
     )
 
-
-# ─────────────────────────────────────────────
-#  Bekor qilish
-# ─────────────────────────────────────────────
 
 @router.message(
     F.text == "❌ Bekor qilish",
@@ -196,17 +331,13 @@ async def cmd_addmod(message: types.Message, state: FSMContext):
 )
 async def cancel_upload(message: types.Message, state: FSMContext):
     await state.clear()
-    await message.answer("❌ Mod qo'shish bekor qilindi.", reply_markup=ReplyKeyboardRemove())
+    await message.answer("Mod qo'shish bekor qilindi.", reply_markup=ReplyKeyboardRemove())
 
-
-# ─────────────────────────────────────────────
-#  3-8. FSM bosqichlari
-# ─────────────────────────────────────────────
 
 @router.message(AddMod.waiting_name, F.chat.type == "private", F.from_user.id == ADMIN_ID)
 async def step_name(message: types.Message, state: FSMContext):
     await state.update_data(name=message.text.strip())
-    await message.answer("2/6 — Kategoriyani tanlang:", reply_markup=CATEGORY_KB)
+    await message.answer("2/5 — Kategoriyani tanlang:", reply_markup=CATEGORY_KB)
     await state.set_state(AddMod.waiting_category)
 
 
@@ -218,7 +349,7 @@ async def step_category(message: types.Message, state: FSMContext):
         return
     await state.update_data(category=cat)
     await message.answer(
-        "3/6 — Mod <b>tavsifini</b> kiriting (1-3 jumla):",
+        "3/5 — Mod <b>tavsifini</b> kiriting (1-3 jumla):",
         parse_mode="HTML",
         reply_markup=_cancel_kb(),
     )
@@ -229,22 +360,7 @@ async def step_category(message: types.Message, state: FSMContext):
 async def step_description(message: types.Message, state: FSMContext):
     await state.update_data(description=message.text.strip())
     await message.answer(
-        "4/6 — <b>Narxini</b> kiriting (UZS, faqat raqam):\n<i>Masalan: 49900</i>",
-        parse_mode="HTML",
-    )
-    await state.set_state(AddMod.waiting_price)
-
-
-@router.message(AddMod.waiting_price, F.chat.type == "private", F.from_user.id == ADMIN_ID)
-async def step_price(message: types.Message, state: FSMContext):
-    try:
-        price = int(message.text.strip().replace(" ", "").replace(",", ""))
-    except ValueError:
-        await message.answer("Faqat raqam kiriting. Masalan: <code>49900</code>", parse_mode="HTML")
-        return
-    await state.update_data(price=price)
-    await message.answer(
-        "5/6 — <b>YouTube Shorts URL</b> kiriting:\n"
+        "4/5 — <b>YouTube Shorts URL</b> kiriting:\n"
         "<i>Masalan: https://youtube.com/shorts/xxxxx</i>\n\n"
         "Yo'q bo'lsa <code>-</code> yuboring.",
         parse_mode="HTML",
@@ -257,7 +373,7 @@ async def step_video(message: types.Message, state: FSMContext):
     video_url = "" if message.text.strip() == "-" else message.text.strip()
     await state.update_data(video_url=video_url)
     await message.answer(
-        "6/6 — <b>Thumbnail rasm URL</b> kiriting:\n"
+        "5/5 — <b>Thumbnail rasm URL</b> kiriting:\n"
         "Yo'q bo'lsa <code>-</code> yuboring.",
         parse_mode="HTML",
     )
@@ -277,46 +393,55 @@ async def step_image(message: types.Message, state: FSMContext):
         name        = data["name"],
         category    = data["category"],
         description = data["description"],
-        price       = data["price"],
+        price       = 0,
         image_url   = image_url,
         video_url   = data.get("video_url", ""),
         file_id     = data["file_id"],
     )
 
-    price_fmt = f"{data['price']:,}".replace(",", " ")
     await message.answer(
         f"<b>Mod bazaga qo'shildi!</b>\n\n"
         f"ID: <code>{mod_id}</code>\n"
         f"Nom: <b>{data['name']}</b>\n"
-        f"Kategoriya: {data['category']}\n"
-        f"Narx: {price_fmt} UZS\n\n"
+        f"Kategoriya: {data['category']}\n\n"
         f"Katalog yangilanmoqda...",
         parse_mode="HTML",
         reply_markup=ReplyKeyboardRemove(),
     )
 
-    # Avtomatik mods.json ni yangilab, GitHub/Vercel ga push qilish
     await sync_mods_to_github()
 
+
+# ═══════════════════════════════════════════════════════════════
+#  SYNC va ADMIN BUYRUQLARI
+# ═══════════════════════════════════════════════════════════════
 
 async def sync_mods_to_github():
     """Barcha modlarni mods.json ga eksport qilib, GitHub/Vercel ga push qiladi."""
     try:
         import json, subprocess
+
         mods = await db.get_all_mods()
+
+        # Rasm URL larni to'g'rilash — tg_photo: prefixli rasmlar uchun
+        # Telegram Bot API getFile URL yasaymiz
+        for mod in mods:
+            img = mod.get("image_url", "")
+            if img.startswith("tg_photo:"):
+                photo_file_id = img.replace("tg_photo:", "")
+                mod["image_url"] = f"https://api.telegram.org/bot{BOT_TOKEN}/getFile?file_id={photo_file_id}"
+                # Thumbnail sifatida to'g'ridan Telegram CDN ishlatamiz
+                mod["thumbnail"] = f"/api/photo/{photo_file_id}"
+
         with open("mods.json", "w", encoding="utf-8") as f:
             json.dump({"ok": True, "count": len(mods), "mods": mods}, f, indent=2, ensure_ascii=False)
         subprocess.run(["git", "add", "mods.json"], capture_output=True)
         subprocess.run(["git", "commit", "-m", "auto: sync mods.json to Vercel"], capture_output=True)
         subprocess.run(["git", "push", "origin", "main"], capture_output=True)
-        print("[SYNC] mods.json GitHub va Vercel ga muvaffaqiyatli push qilindi")
+        logger.info("[SYNC] mods.json push qilindi")
     except Exception as e:
-        print(f"[SYNC] Xatolik: {e}")
+        logger.error(f"[SYNC] Xatolik: {e}")
 
-
-# ─────────────────────────────────────────────
-#  Admin buyruqlari
-# ─────────────────────────────────────────────
 
 @router.message(Command("admin"), F.from_user.id == ADMIN_ID)
 async def cmd_admin(message: types.Message):
@@ -324,12 +449,16 @@ async def cmd_admin(message: types.Message):
     pending = "Ha" if ADMIN_ID in _pending_file else "Yo'q"
     pf = _pending_file.get(ADMIN_ID, {})
     pending_name = pf.get("file_name", "-")
+    auto_photo = "Ha" if _pending_auto.get("photo_id") else "Yo'q"
+    auto_file  = "Ha" if _pending_auto.get("file_id") else "Yo'q"
     await message.answer(
         f"<b>Admin Panel</b>\n\n"
         f"Bazadagi modlar: <b>{len(mods)} ta</b>\n"
         f"Kutayotgan fayl: <b>{pending}</b>"
         + (f" — <code>{pending_name}</code>" if pending == "Ha" else "") +
-        f"\n\n/addmod — Yangi mod kiritish\n"
+        f"\n\n<b>Avtomatik rejim:</b>\n"
+        f"Rasm: {auto_photo}   |   Fayl: {auto_file}\n\n"
+        f"/addmod — Qo'lda mod kiritish\n"
         f"/listmods — Ro'yxat\n"
         f"/deletemod &lt;id&gt; — O'chirish",
         parse_mode="HTML",
@@ -344,8 +473,7 @@ async def cmd_listmods(message: types.Message):
         return
     lines = [f"<b>Modlar ({len(mods)} ta):</b>\n"]
     for m in mods:
-        pf = f"{m['price']:,}".replace(",", " ")
-        lines.append(f"#{m['id']} {m['name']} | {m['category']} | {pf} UZS")
+        lines.append(f"#{m['id']} {m['name']} | {m['category']}")
     await message.answer("\n".join(lines), parse_mode="HTML")
 
 
@@ -361,4 +489,3 @@ async def cmd_deletemod(message: types.Message):
         await message.answer(f"Mod #{parts[1]} o'chirildi va katalog yangilandi.")
     else:
         await message.answer(f"Mod #{parts[1]} topilmadi.")
-

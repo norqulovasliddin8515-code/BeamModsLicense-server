@@ -282,6 +282,37 @@ def build_web_app(bot: Bot) -> web.Application:
 
     app.router.add_post("/api/download", api_download)
 
+    # ── Photo Proxy (Telegram photo file_id → redirect to CDN) ──
+    async def api_photo(request: web.Request) -> web.Response:
+        """
+        GET /api/photo/{file_id}
+        
+        Telegram photo file_id ni CDN URL ga redirect qiladi.
+        Mini App rasmlarni ko'rsatish uchun ishlatiladi.
+        """
+        file_id = request.match_info.get("file_id", "")
+        if not file_id:
+            return web.Response(status=400, text="file_id kerak")
+        
+        try:
+            import aiohttp as aio_http
+            api_url = f"https://api.telegram.org/bot{BOT_TOKEN}/getFile?file_id={file_id}"
+            async with aio_http.ClientSession() as session:
+                async with session.get(api_url) as resp:
+                    data = await resp.json()
+                    if data.get("ok") and data.get("result", {}).get("file_path"):
+                        file_path = data["result"]["file_path"]
+                        cdn_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+                        raise web.HTTPFound(cdn_url)  # 302 redirect
+            return web.Response(status=404, text="Photo not found")
+        except web.HTTPFound:
+            raise  # re-raise the redirect
+        except Exception as e:
+            logger.error(f"[Photo] Xatolik: {e}")
+            return web.Response(status=500, text=str(e))
+
+    app.router.add_get("/api/photo/{file_id}", api_photo)
+
     # ── To'lov Webhooklar ──────────────────────────────────────
     async def click_prepare(r):  return await pay_handler.click_prepare(r)
     async def click_complete(r): return await pay_handler.click_complete(r, bot)

@@ -552,13 +552,11 @@
     <h2 class="sheet-title"  id="sheetTitle">—</h2>
     <div class="sheet-badge-row">
         <span class="badge badge-cat" id="sheetCat">—</span>
-        <span class="badge" id="sheetPriceBadge">—</span>
     </div>
     <p class="sheet-desc" id="sheetDesc">—</p>
 
     <div class="sheet-action-row">
-        <span class="price-big" id="sheetPriceBig">0 UZS</span>
-        <button class="cta-btn" id="sheetCtaBtn" onclick="downloadCurrent()">⬇️ Yuklab olish</button>
+        <button class="cta-btn" id="sheetCtaBtn" onclick="downloadCurrent()" style="width:100%">⬇️ Yuklab olish</button>
     </div>
 </div>
 
@@ -701,11 +699,22 @@ async function loadCatalog() {
 
     // Natijani qayta ishlash
     if (data && Array.isArray(data.mods) && data.mods.length > 0) {
-        allMods = data.mods.map(m => ({
-            ...m,
-            youtube_url: m.video_url || '',
-            thumbnail:   m.image_url || '',
-        }));
+        allMods = data.mods.map(m => {
+            // Thumbnail: agar tg_photo: bilan boshlansa → /api/photo/ proxy
+            let thumb = m.image_url || m.thumbnail || '';
+            if (thumb.startsWith('tg_photo:')) {
+                const photoId = thumb.replace('tg_photo:', '');
+                // Ngrok API orqali photo proxy
+                thumb = (typeof API_URL !== 'undefined' && API_URL)
+                    ? `${API_URL}/api/photo/${photoId}`
+                    : `/api/photo/${photoId}`;
+            }
+            return {
+                ...m,
+                youtube_url: m.video_url || '',
+                thumbnail:   thumb,
+            };
+        });
     } else {
         console.warn('[API] Barcha jonli manbalar topilmadi, demo data ishlatiladi');
         allMods = DEMO_MODS;
@@ -757,9 +766,6 @@ function renderCatalog(mods) {
         return;
     }
     grid.innerHTML = mods.map(mod => {
-        const priceStr = mod.price > 0
-            ? `${mod.price.toLocaleString('uz-UZ')} UZS`
-            : 'Bepul';
         return `
             <div class="mod-card" onclick="openSheet(${mod.id})">
                 <img src="${mod.thumbnail}" alt="${mod.name}" loading="lazy"
@@ -767,8 +773,7 @@ function renderCatalog(mods) {
                 <div class="mod-card-body">
                     <div class="mod-card-name">${mod.name}</div>
                     <div class="mod-card-meta">
-                        <span class="mod-price">${priceStr}</span>
-                        <span class="mod-cat-badge ${mod.price===0?'free-badge':''}">${mod.category}</span>
+                        <span class="mod-cat-badge">${mod.category}</span>
                     </div>
                 </div>
             </div>`;
@@ -880,7 +885,7 @@ function renderShortsFeed() {
             <!-- Mod info + BUY button (Telegram-style CTA!) -->
             <div class="short-info">
                 <div class="short-mod-name">${mod.name}</div>
-                <div class="short-mod-cat">📂 ${mod.category} · ${(mod.price||0).toLocaleString('uz-UZ')} UZS</div>
+                <div class="short-mod-cat">📂 ${mod.category}</div>
                 <button class="short-buy-btn" onclick="openSheet(${mod.id})">
                     ⬇️ Yuklab olish
                 </button>
@@ -1011,23 +1016,17 @@ function openSheet(modId) {
     if (!mod) return;
     currentMod = mod;
 
-    const isFree = mod.price === 0;
-    const priceStr = isFree ? 'Bepul' : `${mod.price.toLocaleString('uz-UZ')} UZS`;
-
     document.getElementById('sheetImg').src         = mod.thumbnail;
     document.getElementById('sheetTitle').innerText = mod.name;
     document.getElementById('sheetCat').innerText   = mod.category;
     document.getElementById('sheetDesc').innerText  = mod.description || '—';
-    document.getElementById('sheetPriceBig').innerText = priceStr;
-
-    const badge = document.getElementById('sheetPriceBadge');
-    badge.innerText  = priceStr;
-    badge.className  = `badge ${isFree ? 'badge-free' : 'badge-paid'}`;
 
     // Har doim "Yuklab olish" tugmasi
     const cta = document.getElementById('sheetCtaBtn');
     cta.innerText = '⬇️ Yuklab olish';
     cta.className = 'cta-btn';
+    cta.disabled  = false;
+    cta.style.background = '';
 
     document.getElementById('sheetBackdrop').classList.add('open');
     document.getElementById('modSheet').classList.add('open');
