@@ -6,35 +6,31 @@
     <title>BeamModsStudio</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-    /* ═══════════════════════════════════════════════
-       DESIGN TOKENS — Modern E-Commerce Dark UI
-    ═══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════
+       FIGMA E-COMMERCE STYLE — Light Clean Design
+    ══════════════════════════════════════════════════ */
     :root {
-        --bg:        #0a0a0f;
-        --bg2:       #111118;
-        --surface:   #16161f;
-        --surface2:  #1e1e2a;
-        --surface3:  #252535;
-        --accent:    #7c3aed;
-        --accent2:   #a855f7;
-        --accent3:   #c084fc;
-        --neon:      #8b5cf6;
-        --green:     #10b981;
-        --orange:    #f59e0b;
-        --red:       #ef4444;
-        --text:      #f8fafc;
-        --text2:     #cbd5e1;
-        --muted:     #64748b;
-        --border:    rgba(255,255,255,0.06);
-        --border2:   rgba(124,58,237,0.3);
+        --bg:        #F7F7F7;
+        --white:     #FFFFFF;
+        --orange:    #FF6B35;
+        --orange2:   #FF8C5A;
+        --orange-lt: rgba(255,107,53,0.10);
+        --dark:      #1A1A2E;
+        --dark2:     #2D2D44;
+        --gray:      #8A8A9A;
+        --gray2:     #C4C4D4;
+        --gray-lt:   #F0F0F5;
+        --border:    #EBEBF0;
+        --card-bg:   #FFFFFF;
+        --text:      #1A1A2E;
+        --text2:     #5A5A7A;
         --radius:    16px;
         --radius-lg: 24px;
-        --radius-xl: 32px;
-        --shadow:    0 20px 60px rgba(0,0,0,0.6);
-        --glow:      0 0 40px rgba(124,58,237,0.25);
+        --shadow:    0 4px 24px rgba(0,0,0,0.08);
+        --shadow-sm: 0 2px 12px rgba(0,0,0,0.05);
+        --shadow-btn:0 8px 20px rgba(255,107,53,0.35);
     }
 
     * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -42,17 +38,18 @@
     html, body {
         background: var(--bg);
         color: var(--text);
-        font-family: 'Inter', sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         height: 100%;
         overflow: hidden;
+        -webkit-font-smoothing: antialiased;
     }
 
-    /* ─── SCROLLBAR ─────────────────────────────── */
+    /* Scrollbar */
     ::-webkit-scrollbar { width:3px; height:3px; }
     ::-webkit-scrollbar-track { background:transparent; }
-    ::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:4px; }
+    ::-webkit-scrollbar-thumb { background:var(--gray2); border-radius:4px; }
 
-    /* ─── APP LAYOUT ────────────────────────────── */
+    /* ── APP SHELL ─────────────────────────────────── */
     .app {
         max-width: 480px;
         margin: 0 auto;
@@ -60,107 +57,126 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        position: relative;
+        background: var(--bg);
     }
 
-    /* ─── HEADER ────────────────────────────────── */
-    .header {
-        padding: 16px 20px 12px;
+    /* ── PAGES ─────────────────────────────────────── */
+    .page { display:none; flex:1; overflow:hidden; flex-direction:column; }
+    .page.active { display:flex; }
+
+    /* ══════════════════════════════════════════════════
+       CATALOG PAGE
+    ══════════════════════════════════════════════════ */
+
+    /* ── HEADER ──────────────────────────────────────  */
+    .hdr {
+        padding: 18px 20px 12px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         flex-shrink: 0;
         background: var(--bg);
-        position: relative;
-        z-index: 10;
     }
-    .header-left { display:flex; flex-direction:column; gap:2px; }
-    .header-greeting {
-        font-size: 12px;
-        color: var(--muted);
+    .hdr-left {}
+    .hdr-greeting {
+        font-size: 13px;
+        color: var(--gray);
         font-weight: 500;
-        letter-spacing: 0.3px;
+        margin-bottom: 2px;
     }
-    .brand {
-        font-family: 'Space Grotesk', sans-serif;
+    .hdr-title {
         font-size: 22px;
-        font-weight: 700;
-        background: linear-gradient(135deg, #a78bfa, #7c3aed, #ec4899);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        font-weight: 800;
+        color: var(--dark);
         letter-spacing: -0.5px;
+        line-height: 1.1;
     }
-    .header-right { display:flex; gap:8px; align-items:center; }
-    .hdr-btn {
-        width: 40px; height: 40px;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
+    .hdr-right { display:flex; gap:10px; align-items:center; }
+    .hdr-icon {
+        width: 42px; height: 42px;
+        background: var(--white);
+        border: 1.5px solid var(--border);
+        border-radius: 13px;
         display: flex; align-items:center; justify-content:center;
-        cursor: pointer; font-size: 17px;
-        transition: all .2s;
+        cursor: pointer; font-size: 18px;
+        box-shadow: var(--shadow-sm);
+        transition: transform .15s;
         position: relative;
     }
-    .hdr-btn:active { transform: scale(.9); background: var(--surface2); }
-    .hdr-btn .badge-dot {
-        position: absolute; top: 7px; right: 7px;
-        width: 7px; height: 7px;
-        background: var(--accent2);
+    .hdr-icon:active { transform: scale(.92); }
+    .notif-dot {
+        position: absolute; top: 8px; right: 8px;
+        width: 8px; height: 8px;
+        background: var(--orange);
         border-radius: 50%;
-        border: 1.5px solid var(--bg);
+        border: 2px solid var(--bg);
     }
-    .avatar-btn {
-        width: 40px; height: 40px;
-        background: linear-gradient(135deg, var(--accent), var(--accent2));
-        border-radius: 12px;
+    .avatar {
+        width: 42px; height: 42px;
+        background: linear-gradient(135deg, var(--orange), var(--orange2));
+        border-radius: 13px;
         display: flex; align-items:center; justify-content:center;
-        font-size: 16px; cursor:pointer;
-        font-weight: 700; color: #fff;
-        box-shadow: 0 4px 14px rgba(124,58,237,0.4);
+        font-size: 15px; font-weight: 800;
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(255,107,53,0.3);
     }
 
-    /* ─── PAGES ─────────────────────────────────── */
-    .page { display:none; flex:1; overflow:hidden; flex-direction:column; }
-    .page.active { display:flex; }
-
-    /* ─── HERO BANNER ───────────────────────────── */
-    .hero-section {
-        margin: 0 20px 16px;
+    /* ── SEARCH BAR ────────────────────────────────── */
+    .search-row {
+        padding: 0 20px 14px;
         flex-shrink: 0;
     }
-    .hero-card {
-        background: linear-gradient(135deg, #1a0533 0%, #2d1b69 50%, #1a0533 100%);
-        border: 1px solid rgba(124,58,237,0.3);
-        border-radius: var(--radius-xl);
-        padding: 20px;
+    .search-box {
+        background: var(--white);
+        border: 1.5px solid var(--border);
+        border-radius: 14px;
+        display: flex; align-items:center;
+        padding: 4px 16px;
+        box-shadow: var(--shadow-sm);
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .search-box:focus-within {
+        border-color: var(--orange);
+        box-shadow: 0 0 0 3px rgba(255,107,53,0.12);
+    }
+    .search-icon { font-size:16px; color:var(--gray2); flex-shrink:0; }
+    .search-box input {
+        flex:1; border:none; background:transparent;
+        color:var(--text); font-size:14px; padding:11px 10px;
+        outline:none; font-family:inherit;
+    }
+    .search-box input::placeholder { color:var(--gray2); }
+
+    /* ── PROMO BANNER ──────────────────────────────── */
+    .banner-wrap {
+        padding: 0 20px 16px;
+        flex-shrink: 0;
+    }
+    .banner {
+        background: linear-gradient(135deg, #FF6B35 0%, #FF9F6B 60%, #FFB347 100%);
+        border-radius: 20px;
+        padding: 20px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 130px;
         position: relative;
         overflow: hidden;
-        min-height: 140px;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
+        box-shadow: 0 8px 28px rgba(255,107,53,0.35);
     }
-    .hero-card::before {
+    .banner::before {
         content: '';
         position: absolute;
-        top: -30px; right: -30px;
-        width: 160px; height: 160px;
-        background: radial-gradient(circle, rgba(168,85,247,0.4) 0%, transparent 70%);
-        pointer-events: none;
+        top: -40px; right: -20px;
+        width: 180px; height: 180px;
+        background: rgba(255,255,255,0.12);
+        border-radius: 50%;
     }
-    .hero-card::after {
-        content: '🎮';
-        position: absolute;
-        top: 16px; right: 20px;
-        font-size: 52px;
-        opacity: 0.4;
-        transform: rotate(-12deg);
-    }
-    .hero-tag {
-        background: rgba(124,58,237,0.5);
-        border: 1px solid rgba(168,85,247,0.4);
-        color: var(--accent3);
+    .banner-left { flex:1; z-index:1; }
+    .banner-tag {
+        background: rgba(255,255,255,0.25);
+        color: #fff;
         font-size: 10px;
         font-weight: 700;
         text-transform: uppercase;
@@ -168,223 +184,171 @@
         padding: 4px 10px;
         border-radius: 20px;
         display: inline-block;
-        margin-bottom: 8px;
-        width: fit-content;
+        margin-bottom: 10px;
     }
-    .hero-title {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 20px;
-        font-weight: 700;
-        line-height: 1.2;
-        margin-bottom: 4px;
+    .banner-title {
+        font-size: 22px;
+        font-weight: 800;
         color: #fff;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+        margin-bottom: 14px;
     }
-    .hero-subtitle {
-        font-size: 12px;
-        color: rgba(255,255,255,0.6);
-        font-weight: 400;
+    .banner-btn {
+        display: inline-flex; align-items:center; gap:6px;
+        background: rgba(255,255,255,0.95);
+        color: var(--orange);
+        font-size: 13px; font-weight: 700;
+        padding: 9px 18px; border-radius: 30px;
+        border: none; cursor: pointer;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+        transition: transform .15s;
+        font-family: inherit;
     }
-
-    /* ─── SEARCH BAR ────────────────────────────── */
-    .search-wrap {
-        margin: 0 20px 14px;
+    .banner-btn:active { transform: scale(.95); }
+    .banner-right {
+        font-size: 72px;
+        line-height: 1;
+        z-index: 1;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
         flex-shrink: 0;
     }
-    .search-bar {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        display: flex; align-items:center;
-        padding: 4px 14px;
-        transition: border-color .2s;
-    }
-    .search-bar:focus-within {
-        border-color: rgba(124,58,237,0.5);
-        box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
-    }
-    .search-bar input {
-        flex:1; border:none; background:transparent;
-        color:var(--text); font-size:14px; padding:11px 0 11px 10px;
-        outline:none; font-family: 'Inter', sans-serif;
-    }
-    .search-bar input::placeholder { color:var(--muted); }
-    .search-icon { color:var(--muted); font-size:15px; flex-shrink:0; }
 
-    /* ─── SECTION HEADER ────────────────────────── */
-    .section-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 20px;
-        margin-bottom: 12px;
+    /* ── SECTION HEADER ─────────────────────────────── */
+    .sec-head {
+        display:flex; align-items:center; justify-content:space-between;
+        padding: 0 20px 12px;
         flex-shrink: 0;
     }
-    .section-title {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--text);
+    .sec-title {
+        font-size: 17px; font-weight: 800;
+        color: var(--dark); letter-spacing: -0.3px;
     }
-    .section-link {
-        font-size: 12px;
-        color: var(--accent3);
-        font-weight: 600;
-        cursor: pointer;
+    .sec-all {
+        font-size: 13px; font-weight: 600;
+        color: var(--orange); cursor:pointer;
     }
 
-    /* ─── CATEGORY CHIPS ────────────────────────── */
-    .filter-scroll {
+    /* ── CATEGORY CHIPS ─────────────────────────────── */
+    .chips {
         display:flex; gap:8px;
-        overflow-x:auto; padding:0 20px 14px;
+        overflow-x:auto; padding:0 20px 16px;
         scrollbar-width:none; flex-shrink:0;
     }
-    .filter-scroll::-webkit-scrollbar { display:none; }
-    .filter-chip {
-        white-space:nowrap; padding:8px 18px;
-        background:var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 30px;
-        font-size:13px; font-weight:600;
-        color:var(--muted); cursor:pointer;
-        transition: all .2s;
-        font-family: 'Inter', sans-serif;
+    .chips::-webkit-scrollbar { display:none; }
+    .chip {
         flex-shrink: 0;
+        white-space:nowrap; padding:9px 20px;
+        background: var(--white);
+        border: 1.5px solid var(--border);
+        border-radius: 30px;
+        font-size:14px; font-weight:600;
+        color: var(--gray); cursor:pointer;
+        transition: all .2s;
+        font-family: inherit;
+        box-shadow: var(--shadow-sm);
     }
-    .filter-chip.active {
-        background: linear-gradient(135deg, var(--accent), var(--accent2));
+    .chip.active {
+        background: var(--orange);
         color: #fff;
-        border-color: transparent;
-        box-shadow: 0 4px 14px rgba(124,58,237,0.4);
+        border-color: var(--orange);
+        box-shadow: 0 4px 14px rgba(255,107,53,0.38);
     }
 
-    /* ─── CATALOG GRID ──────────────────────────── */
-    .catalog-scroll {
+    /* ── PRODUCT GRID ───────────────────────────────── */
+    .grid-scroll {
         flex: 1;
         overflow-y: auto;
-        padding: 0 20px 100px;
+        padding: 0 14px 90px;
     }
-    .catalog-grid {
+    .grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
     }
 
-    /* ─── MOD CARD ──────────────────────────────── */
-    .mod-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 20px;
+    /* ── PRODUCT CARD ───────────────────────────────── */
+    .card {
+        background: var(--white);
+        border-radius: 18px;
         overflow: hidden;
         cursor: pointer;
-        transition: all .25s cubic-bezier(.4,0,.2,1);
         position: relative;
+        box-shadow: var(--shadow-sm);
+        border: 1.5px solid var(--border);
+        transition: transform .2s cubic-bezier(.4,0,.2,1),
+                    box-shadow .2s;
     }
-    .mod-card:active { transform: scale(.95); }
-    .mod-card-img-wrap {
-        position: relative;
-        overflow: hidden;
+    .card:active {
+        transform: scale(.96);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    .mod-card img {
-        width:100%; height:120px;
-        object-fit:cover; display:block;
-        transition: transform .3s;
-    }
-    .mod-card:active img { transform: scale(1.05); }
-    .mod-card-overlay {
-        position: absolute;
-        bottom: 0; left: 0; right: 0;
-        height: 50%;
-        background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-        pointer-events: none;
-    }
-    .mod-card-body {
-        padding: 10px 12px 13px;
-    }
-    .mod-card-name {
-        font-size: 13px;
-        font-weight: 700;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-bottom: 8px;
-        color: var(--text);
-        font-family: 'Space Grotesk', sans-serif;
-    }
-    .mod-card-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .mod-cat-pill {
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 3px 8px;
-        border-radius: 6px;
-        background: var(--surface3);
-        color: var(--muted);
-    }
-    .mod-dl-icon {
-        width: 28px; height: 28px;
-        background: linear-gradient(135deg, var(--accent), var(--accent2));
-        border-radius: 8px;
+
+    /* Heart button */
+    .card-heart {
+        position: absolute; top:10px; right:10px;
+        width: 32px; height: 32px;
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(4px);
+        border-radius: 10px;
         display: flex; align-items:center; justify-content:center;
-        font-size: 12px;
-        box-shadow: 0 4px 10px rgba(124,58,237,0.4);
+        font-size: 15px; cursor:pointer; z-index:5;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         transition: transform .15s;
     }
+    .card-heart:active { transform: scale(.85); }
+    .card-heart.liked { background: rgba(255,107,53,0.12); }
 
-    /* FEATURED (wide) card — 1st item */
-    .mod-card.featured {
-        grid-column: span 2;
-        display: flex;
-        flex-direction: row;
-        height: 110px;
-    }
-    .mod-card.featured .mod-card-img-wrap {
-        width: 120px;
-        flex-shrink: 0;
-    }
-    .mod-card.featured img { height: 100%; border-radius: 0; }
-    .mod-card.featured .mod-card-overlay {
-        display: none;
-    }
-    .mod-card.featured .mod-card-body {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 14px 14px 14px;
-    }
-    .mod-card.featured .mod-card-name {
-        font-size: 14px;
-        white-space: normal;
+    /* Image */
+    .card-img-wrap {
+        background: var(--gray-lt);
+        position: relative;
+        height: 130px;
+        display: flex; align-items:center; justify-content:center;
         overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        text-overflow: ellipsis;
-        margin-bottom: 10px;
     }
-    .featured-badge {
-        position: absolute;
-        top: 10px; left: 10px;
-        background: linear-gradient(135deg, var(--accent), var(--accent2));
-        color: #fff;
-        font-size: 9px;
-        font-weight: 800;
+    .card-img-wrap img {
+        width: 100%; height: 100%;
+        object-fit: cover; display:block;
+        transition: transform .3s;
+    }
+    .card:active .card-img-wrap img { transform: scale(1.05); }
+
+    /* Body */
+    .card-body { padding: 12px 12px 14px; }
+    .card-cat {
+        font-size: 11px; font-weight: 600;
+        color: var(--gray);
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        padding: 3px 8px;
-        border-radius: 6px;
+        margin-bottom: 4px;
     }
+    .card-name {
+        font-size: 14px; font-weight: 700;
+        color: var(--dark);
+        white-space: nowrap; overflow:hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 12px;
+    }
+    .card-dl-btn {
+        width: 100%; padding: 10px;
+        background: var(--orange);
+        color: #fff; border:none;
+        border-radius: 12px;
+        font-size: 13px; font-weight: 700;
+        cursor: pointer; font-family:inherit;
+        display: flex; align-items:center; justify-content:center; gap:6px;
+        box-shadow: var(--shadow-btn);
+        transition: all .15s;
+    }
+    .card-dl-btn:active { transform: scale(.96); }
 
-    /* ─── SHORTS PAGE ───────────────────────────── */
+    /* ══════════════════════════════════════════════════
+       SHORTS PAGE
+    ══════════════════════════════════════════════════ */
     #page-shorts {
-        position: relative;
-        overflow: hidden;
-        touch-action: none;
+        position:relative; overflow:hidden; touch-action:none;
+        background: #000;
     }
     .shorts-container {
         display:flex; flex-direction:column;
@@ -392,8 +356,6 @@
     }
     .short-slide {
         position:absolute; width:100%; height:100%;
-        display:flex; flex-direction:column;
-        align-items:center; justify-content:center;
         transition:transform .4s cubic-bezier(.4,0,.2,1);
         will-change:transform;
     }
@@ -403,9 +365,8 @@
     }
     .yt-player-wrap iframe { width:100%; height:100%; border:none; }
     .short-gradient {
-        position:absolute; bottom:0; left:0;
-        width:100%; height:60%;
-        background:linear-gradient(to top, rgba(0,0,0,.92) 0%, transparent 100%);
+        position:absolute; bottom:0; left:0; right:0; height:55%;
+        background: linear-gradient(to top, rgba(0,0,0,.9), transparent);
         pointer-events:none;
     }
     .short-info {
@@ -413,380 +374,306 @@
         padding:0 20px; z-index:10;
     }
     .short-mod-name {
-        font-family:'Space Grotesk',sans-serif;
-        font-size:20px; font-weight:800;
-        margin-bottom:4px;
-        text-shadow:0 1px 8px rgba(0,0,0,.8);
-        letter-spacing:-0.3px;
+        font-size:20px; font-weight:800; color:#fff;
+        margin-bottom:4px; letter-spacing:-0.3px;
+        text-shadow:0 1px 8px rgba(0,0,0,.6);
     }
     .short-mod-cat {
-        font-size:13px; color:rgba(255,255,255,.65);
+        font-size:13px; color:rgba(255,255,255,.7);
         margin-bottom:14px;
     }
     .short-buy-btn {
         display:inline-flex; align-items:center; gap:8px;
-        background:linear-gradient(135deg, var(--accent), var(--accent2));
+        background: var(--orange);
         color:#fff; border:none;
         padding:13px 24px; border-radius:30px;
         font-size:14px; font-weight:700; cursor:pointer;
-        box-shadow:0 6px 24px rgba(124,58,237,.5);
-        transition:transform .15s;
-        font-family:'Inter',sans-serif;
+        box-shadow:0 6px 24px rgba(255,107,53,.5);
+        transition:transform .15s; font-family:inherit;
         pointer-events:auto;
     }
     .short-buy-btn:active { transform:scale(.95); }
     .scroll-hint {
-        position:absolute; right:14px;
-        display:flex; flex-direction:column;
-        align-items:center; gap:10px; z-index:20;
-        bottom:110px;
+        position:absolute; right:14px; bottom:110px;
+        display:flex; flex-direction:column; align-items:center; gap:10px; z-index:20;
     }
     .scroll-hint-btn {
         width:38px; height:38px;
-        background:rgba(255,255,255,.1);
-        backdrop-filter:blur(10px);
-        border:1px solid rgba(255,255,255,.15);
-        border-radius:50%; display:flex;
-        align-items:center; justify-content:center;
-        font-size:16px; cursor:pointer;
-        transition:transform .15s;
+        background:rgba(255,255,255,.15); backdrop-filter:blur(8px);
+        border:1px solid rgba(255,255,255,.2); border-radius:50%;
+        display:flex; align-items:center; justify-content:center;
+        font-size:16px; cursor:pointer; transition:transform .15s;
     }
     .scroll-hint-btn:active { transform:scale(.9); }
     .short-dots {
-        position:absolute; right:14px; top:50%;
-        transform:translateY(-50%);
+        position:absolute; right:14px; top:50%; transform:translateY(-50%);
         display:flex; flex-direction:column; gap:6px; z-index:20;
     }
     .short-dot {
         width:4px; height:16px; border-radius:2px;
-        background:rgba(255,255,255,.25);
-        transition:all .3s;
+        background:rgba(255,255,255,.3); transition:all .3s;
     }
     .short-dot.active { background:#fff; height:28px; }
 
-    /* ─── BOTTOM SHEET ──────────────────────────── */
-    .sheet-backdrop {
+    /* ══════════════════════════════════════════════════
+       BOTTOM SHEET (Product Detail)
+    ══════════════════════════════════════════════════ */
+    .backdrop {
         position:fixed; inset:0;
-        background:rgba(0,0,0,.75);
-        backdrop-filter:blur(14px);
+        background:rgba(0,0,0,.5);
+        backdrop-filter:blur(8px);
         z-index:100; opacity:0; pointer-events:none;
         transition:opacity .3s;
     }
-    .sheet-backdrop.open { opacity:1; pointer-events:auto; }
-    .bottom-sheet {
+    .backdrop.open { opacity:1; pointer-events:auto; }
+
+    .sheet {
         position:fixed; bottom:0; left:50%; width:100%; max-width:480px;
         transform:translate(-50%, 100%);
-        background: var(--surface);
+        background: var(--white);
         border-radius:28px 28px 0 0;
-        padding: 0 0 36px;
-        z-index:101; max-height:92vh; overflow-y:auto;
+        z-index:101; max-height:88vh; overflow-y:auto;
         transition:transform .4s cubic-bezier(.16,1,.3,1);
-        border-top: 1px solid var(--border);
+        box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
     }
-    .bottom-sheet.open { transform:translate(-50%, 0); }
+    .sheet.open { transform:translate(-50%, 0); }
 
-    .sheet-handle-wrap {
-        padding: 14px 0 4px;
-        text-align: center;
-        cursor: pointer;
+    .sheet-pull {
+        padding: 12px 0 0;
+        text-align:center; cursor:pointer;
     }
-    .sheet-handle {
-        width: 36px; height: 4px; border-radius: 2px;
-        background: var(--surface3);
-        display: inline-block;
+    .sheet-pull-bar {
+        width:36px; height:4px; border-radius:2px;
+        background:var(--gray2); display:inline-block;
     }
-    .sheet-hero {
-        position: relative;
-        margin: 0 0 20px;
+
+    .sheet-img-wrap {
+        margin: 12px 20px 0;
+        height: 200px;
+        background: var(--gray-lt);
+        border-radius: 20px;
+        overflow: hidden;
     }
     .sheet-img {
-        width:100%; height:220px;
-        object-fit:cover; display:block;
+        width:100%; height:100%; object-fit:cover; display:block;
+        border-radius: 20px;
     }
-    .sheet-hero-overlay {
-        position: absolute;
-        bottom: 0; left: 0; right: 0;
-        height: 60%;
-        background: linear-gradient(to top, var(--surface), transparent);
-        pointer-events: none;
+
+    .sheet-body { padding: 20px 20px 36px; }
+
+    .sheet-cat-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+    .sheet-cat-tag {
+        font-size:11px; font-weight:700;
+        text-transform:uppercase; letter-spacing:0.5px;
+        color: var(--orange);
+        background: var(--orange-lt);
+        padding:4px 10px; border-radius:8px;
     }
-    .sheet-hero-badge {
-        position: absolute;
-        top: 14px; right: 14px;
-        background: rgba(0,0,0,0.6);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 10px;
-        padding: 5px 12px;
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--accent3);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .sheet-content {
-        padding: 0 22px;
-    }
+    .sheet-tag-dot { color:var(--gray2); font-size:10px; }
+
     .sheet-title {
-        font-family:'Space Grotesk',sans-serif;
         font-size:22px; font-weight:800;
-        margin-bottom: 6px;
-        letter-spacing: -0.3px;
-        line-height: 1.2;
+        color:var(--dark); letter-spacing:-0.4px;
+        line-height:1.2; margin-bottom:6px;
     }
     .sheet-meta {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 16px;
+        font-size:13px; color:var(--gray);
+        margin-bottom:18px;
     }
-    .sheet-cat {
-        font-size:12px; font-weight:700; text-transform:uppercase;
-        letter-spacing: 0.5px;
-        padding:4px 10px; border-radius:8px;
-        background:var(--surface3); color:var(--muted);
-    }
-    .sheet-dot { color: var(--surface3); }
-    .sheet-sub-info {
-        font-size: 12px;
-        color: var(--muted);
-        font-weight: 500;
-    }
-    .sheet-divider {
-        height: 1px;
-        background: var(--border);
-        margin: 14px 0;
-    }
-    .sheet-desc-label {
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: var(--muted);
-        margin-bottom: 8px;
-    }
-    .sheet-desc {
-        font-size: 14px;
-        line-height: 1.65;
-        color: var(--text2);
-        margin-bottom: 24px;
-    }
+
+    /* Stats row */
     .sheet-stats {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        margin-bottom: 22px;
+        display:flex; gap:10px; margin-bottom:20px;
     }
-    .stat-box {
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 12px;
-        text-align: center;
+    .stat {
+        flex:1; background:var(--gray-lt);
+        border-radius:14px; padding:12px 10px;
+        text-align:center;
     }
     .stat-val {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--text);
-        margin-bottom: 2px;
+        font-size:16px; font-weight:800;
+        color:var(--dark); margin-bottom:2px;
     }
-    .stat-lbl {
-        font-size: 10px;
-        color: var(--muted);
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+    .stat-key {
+        font-size:10px; font-weight:600;
+        color:var(--gray);
+        text-transform:uppercase; letter-spacing:0.5px;
     }
-    .cta-wrap {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-    .cta-btn {
-        flex: 1; padding: 16px;
-        background: linear-gradient(135deg, var(--accent), var(--accent2));
-        color: #fff; border: none; border-radius: 16px;
-        font-size: 15px; font-weight: 700; cursor: pointer;
-        box-shadow: 0 8px 24px rgba(124,58,237,.45);
-        transition: all .2s;
-        font-family: 'Inter', sans-serif;
-        letter-spacing: 0.2px;
-    }
-    .cta-btn:active { transform: scale(.97); }
-    .fav-btn {
-        width: 52px; height: 52px;
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        display: flex; align-items:center; justify-content:center;
-        font-size: 20px; cursor: pointer;
-        transition: all .2s;
-        flex-shrink: 0;
-    }
-    .fav-btn:active { transform: scale(.92); background: var(--surface3); }
 
-    /* ─── BOTTOM NAV ────────────────────────────── */
-    .bottom-nav-wrap {
-        position: fixed; bottom: 0;
-        left: 50%; transform: translateX(-50%);
-        width: 100%; max-width: 480px;
-        z-index: 60;
-        pointer-events: none;
+    .sheet-desc-lbl {
+        font-size:11px; font-weight:700;
+        text-transform:uppercase; letter-spacing:1px;
+        color:var(--gray); margin-bottom:8px;
     }
-    .bottom-nav {
-        background: rgba(22, 22, 31, 0.95);
-        border-top: 1px solid var(--border);
-        backdrop-filter: blur(20px);
-        padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
-        display: flex;
-        align-items: center;
-        justify-content: space-around;
-        pointer-events: auto;
+    .sheet-desc {
+        font-size:14px; line-height:1.65;
+        color:var(--text2); margin-bottom:24px;
     }
-    .nav-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        padding: 6px 16px;
-        border-radius: 14px;
-        cursor: pointer;
-        transition: all .2s;
-        color: var(--muted);
-        user-select: none;
-        min-width: 56px;
-    }
-    .nav-item .nav-icon { font-size: 20px; line-height: 1; }
-    .nav-item .nav-lbl {
-        font-size: 10px;
-        font-weight: 600;
-        white-space: nowrap;
-        display: none;
-        letter-spacing: 0.3px;
-    }
-    .nav-item.active {
-        color: var(--accent2);
-    }
-    .nav-item.active .nav-lbl {
-        display: block;
-        color: var(--accent2);
-    }
-    .nav-item.active .nav-icon { font-size: 22px; }
-    .nav-center-btn {
-        width: 52px; height: 52px;
-        background: linear-gradient(135deg, var(--accent), var(--accent2));
-        border-radius: 16px;
-        display: flex; align-items:center; justify-content:center;
-        font-size: 22px; cursor: pointer;
-        box-shadow: 0 6px 20px rgba(124,58,237,.5);
-        transition: transform .2s;
-        pointer-events: auto;
-        flex-shrink: 0;
-        margin-top: -8px;
-    }
-    .nav-center-btn:active { transform: scale(.9); }
 
-    /* ─── AI FAB ────────────────────────────────── */
-    .ai-fab {
-        position: fixed; bottom: 90px; right: 20px;
-        width: 50px; height: 50px;
-        background: linear-gradient(135deg, #7c3aed, #a855f7);
-        border-radius: 15px;
-        display: flex; align-items:center; justify-content:center;
-        font-size: 20px; cursor: pointer; z-index: 50;
-        box-shadow: 0 8px 24px rgba(124,58,237,.5);
+    .sheet-actions { display:flex; gap:10px; }
+    .sheet-fav {
+        width:52px; height:52px; flex-shrink:0;
+        background:var(--gray-lt);
+        border:1.5px solid var(--border);
+        border-radius:14px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:20px; cursor:pointer;
+        transition:all .2s;
+    }
+    .sheet-fav:active { background:var(--orange-lt); border-color:var(--orange); }
+    .sheet-dl-btn {
+        flex:1; padding:16px;
+        background: var(--orange);
+        color:#fff; border:none; border-radius:16px;
+        font-size:16px; font-weight:700; cursor:pointer;
+        box-shadow: var(--shadow-btn);
+        transition:all .2s; font-family:inherit;
+        display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .sheet-dl-btn:active { transform:scale(.97); }
+
+    /* ══════════════════════════════════════════════════
+       BOTTOM NAVIGATION
+    ══════════════════════════════════════════════════ */
+    .nav-wrap {
+        position:fixed; bottom:0;
+        left:50%; transform:translateX(-50%);
+        width:100%; max-width:480px;
+        z-index:60; pointer-events:none;
+    }
+    .nav {
+        background: var(--white);
+        border-top: 1.5px solid var(--border);
+        padding: 10px 8px calc(12px + env(safe-area-inset-bottom));
+        display:flex; align-items:center; justify-content:space-around;
+        pointer-events:auto;
+        box-shadow: 0 -4px 24px rgba(0,0,0,0.07);
+    }
+    .nav-btn {
+        display:flex; flex-direction:column; align-items:center;
+        gap:4px; padding:6px 14px; border-radius:14px;
+        cursor:pointer; transition:all .2s; user-select:none;
+        min-width:52px;
+    }
+    .nav-btn .ni {
+        font-size: 22px; line-height:1;
         transition: transform .2s;
     }
-    .ai-fab:active { transform: scale(.9); }
+    .nav-btn .nl {
+        font-size:10px; font-weight:600;
+        color:var(--gray2); white-space:nowrap;
+        display:none;
+    }
+    .nav-btn.active .ni { transform:scale(1.1); }
+    .nav-btn.active .nl { display:block; color:var(--orange); }
+    .nav-center {
+        width:54px; height:54px;
+        background:var(--orange);
+        border-radius:18px; display:flex;
+        align-items:center; justify-content:center;
+        font-size:22px; cursor:pointer;
+        box-shadow:var(--shadow-btn);
+        transition:transform .2s;
+        pointer-events:auto;
+        margin-top:-14px;
+        flex-shrink:0;
+    }
+    .nav-center:active { transform:scale(.92); }
 
-    /* ─── LOADER ────────────────────────────────── */
+    /* ── LOADER ─────────────────────────────────────── */
     .loader {
+        grid-column:span 2;
         display:flex; flex-direction:column;
         align-items:center; justify-content:center;
         gap:12px; padding:60px 0;
-        color:var(--muted); font-size:14px;
-        grid-column: span 2;
+        color:var(--gray); font-size:14px;
     }
     .spinner {
-        width:32px; height:32px;
-        border: 3px solid var(--surface3);
-        border-top-color: var(--accent);
+        width:30px; height:30px;
+        border:3px solid var(--border);
+        border-top-color:var(--orange);
         border-radius:50%;
         animation:spin .7s linear infinite;
     }
     @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── EMPTY STATE ─────────────────────────────────── */
+    .empty {
+        grid-column:span 2;
+        text-align:center; padding:60px 20px;
+        color:var(--gray);
+    }
+    .empty-icon { font-size:48px; margin-bottom:12px; }
+    .empty-text { font-size:15px; font-weight:600; }
     </style>
 </head>
 <body>
 <div class="app">
 
-    <!-- ── HEADER ──────────────────────────────────── -->
-    <header class="header">
-        <div class="header-left">
-            <span class="header-greeting">Xush kelibsiz 👋</span>
-            <span class="brand">BeamMods</span>
-        </div>
-        <div class="header-right">
-            <div class="hdr-btn" onclick="openMyOrders()">
-                🛒
-                <span class="badge-dot"></span>
-            </div>
-            <div class="avatar-btn" onclick="openAIChat()">AI</div>
-        </div>
-    </header>
+    <!-- ══ CATALOG PAGE ═══════════════════════════════ -->
+    <div class="page active" id="page-catalog">
 
-    <!-- ══════════════════════════════════════════════
-         PAGE: CATALOG
-    ══════════════════════════════════════════════ -->
-    <div class="page active" id="page-catalog" style="overflow:hidden; display:flex; flex-direction:column;">
-
-        <!-- Hero Banner -->
-        <div class="hero-section">
-            <div class="hero-card">
-                <span class="hero-tag">⚡ Yangi modlar</span>
-                <div class="hero-title">BeamNG.drive<br>Modlar Katalogi</div>
-                <div class="hero-subtitle">Premium modlar — obuna orqali bepul</div>
+        <!-- Header -->
+        <header class="hdr">
+            <div class="hdr-left">
+                <div class="hdr-greeting" id="greetText">Xush kelibsiz 👋</div>
+                <div class="hdr-title">BeamMods</div>
             </div>
-        </div>
+            <div class="hdr-right">
+                <div class="hdr-icon" onclick="openMyOrders()">
+                    🛒
+                    <span class="notif-dot"></span>
+                </div>
+                <div class="avatar" onclick="openAIChat()">AI</div>
+            </div>
+        </header>
 
         <!-- Search -->
-        <div class="search-wrap">
-            <div class="search-bar">
+        <div class="search-row">
+            <div class="search-box">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="searchInput" placeholder="Mod yoki xarita izlash...">
             </div>
         </div>
 
-        <!-- Category Chips -->
-        <div class="filter-scroll">
-            <div class="filter-chip active" onclick="filterCatalog('all', this)">Barchasi</div>
-            <div class="filter-chip"        onclick="filterCatalog('cars', this)">🚗 Cars</div>
-            <div class="filter-chip"        onclick="filterCatalog('trucks', this)">🚛 Trucks</div>
-            <div class="filter-chip"        onclick="filterCatalog('maps', this)">🗺️ Maps</div>
-            <div class="filter-chip"        onclick="filterCatalog('3d_models', this)">🎨 3D</div>
+        <!-- Promo Banner -->
+        <div class="banner-wrap">
+            <div class="banner">
+                <div class="banner-left">
+                    <span class="banner-tag">⭐ Premium</span>
+                    <div class="banner-title">Yangi<br>Modlar!</div>
+                    <button class="banner-btn" onclick="filterCatalog('cars', document.querySelector('.chip'))">
+                        Ko'rish →
+                    </button>
+                </div>
+                <div class="banner-right">🚗</div>
+            </div>
         </div>
 
-        <!-- Section label -->
-        <div class="section-head">
-            <span class="section-title">Barcha modlar</span>
-            <span class="section-link" id="modCount"></span>
+        <!-- Section head -->
+        <div class="sec-head">
+            <span class="sec-title">Modlar</span>
+            <span class="sec-all" id="modCount"></span>
+        </div>
+
+        <!-- Category chips -->
+        <div class="chips">
+            <div class="chip active" onclick="filterCatalog('all', this)">Barchasi</div>
+            <div class="chip"        onclick="filterCatalog('cars', this)">🚗 Cars</div>
+            <div class="chip"        onclick="filterCatalog('trucks', this)">🚛 Trucks</div>
+            <div class="chip"        onclick="filterCatalog('maps', this)">🗺️ Maps</div>
+            <div class="chip"        onclick="filterCatalog('3d_models', this)">🎨 3D</div>
         </div>
 
         <!-- Grid -->
-        <div class="catalog-scroll">
-            <div class="catalog-grid" id="catalogGrid">
-                <div class="loader" style="grid-column:span 2">
-                    <div class="spinner"></div>
-                    <span>Yuklanmoqda...</span>
-                </div>
+        <div class="grid-scroll">
+            <div class="grid" id="catalogGrid">
+                <div class="loader"><div class="spinner"></div><span>Yuklanmoqda...</span></div>
             </div>
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════
-         PAGE: SHORTS FEED
-    ══════════════════════════════════════════════ -->
+    <!-- ══ SHORTS PAGE ════════════════════════════════ -->
     <div class="page" id="page-shorts">
         <div class="shorts-container" id="shortsContainer"></div>
         <div class="scroll-hint">
@@ -798,70 +685,64 @@
 
 </div><!-- .app -->
 
-<!-- ── AI FAB ──────────────────────────────────────── -->
-<div class="ai-fab" onclick="openAIChat()">✨</div>
-
-<!-- ── BOTTOM NAV ──────────────────────────────────── -->
-<div class="bottom-nav-wrap">
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="switchNav('catalog', this)">
-            <span class="nav-icon">🏠</span>
-            <span class="nav-lbl">Home</span>
+<!-- ══ BOTTOM NAV ═══════════════════════════════════ -->
+<div class="nav-wrap">
+    <nav class="nav">
+        <div class="nav-btn active" onclick="switchNav('catalog',this)">
+            <span class="ni">🏠</span>
+            <span class="nl">Home</span>
         </div>
-        <div class="nav-item" onclick="switchNav('shorts', this)">
-            <span class="nav-icon">📱</span>
-            <span class="nav-lbl">Shorts</span>
+        <div class="nav-btn" onclick="switchNav('shorts',this)">
+            <span class="ni">📱</span>
+            <span class="nl">Shorts</span>
         </div>
-        <div class="nav-center-btn" onclick="openAIChat()">✨</div>
-        <div class="nav-item" onclick="openMyOrders()">
-            <span class="nav-icon">🛒</span>
-            <span class="nav-lbl">Orders</span>
+        <div class="nav-center" onclick="switchNav('shorts',document.querySelectorAll('.nav-btn')[1])">▶️</div>
+        <div class="nav-btn" onclick="openMyOrders()">
+            <span class="ni">🛒</span>
+            <span class="nl">Orders</span>
         </div>
-        <div class="nav-item" onclick="openAIChat()">
-            <span class="nav-icon">👤</span>
-            <span class="nav-lbl">Profile</span>
+        <div class="nav-btn" onclick="openAIChat()">
+            <span class="ni">👤</span>
+            <span class="nl">Profile</span>
         </div>
     </nav>
 </div>
 
-<!-- ── MOD DETAIL BOTTOM SHEET ─────────────────────── -->
-<div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
-<div class="bottom-sheet" id="modSheet">
-    <div class="sheet-handle-wrap" onclick="closeSheet()">
-        <div class="sheet-handle"></div>
-    </div>
-    <div class="sheet-hero">
+<!-- ══ BOTTOM SHEET ══════════════════════════════════ -->
+<div class="backdrop" id="backdrop" onclick="closeSheet()"></div>
+<div class="sheet" id="modSheet">
+    <div class="sheet-pull" onclick="closeSheet()"><span class="sheet-pull-bar"></span></div>
+    <div class="sheet-img-wrap">
         <img id="sheetImg" class="sheet-img" src="" alt=""
              onerror="this.src='https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600'">
-        <div class="sheet-hero-overlay"></div>
-        <span class="sheet-hero-badge" id="sheetCat">—</span>
     </div>
-    <div class="sheet-content">
-        <h2 class="sheet-title" id="sheetTitle">—</h2>
-        <div class="sheet-meta">
-            <span class="sheet-sub-info">BeamNG.drive mod</span>
-            <span class="sheet-dot">•</span>
-            <span class="sheet-sub-info" id="sheetSize">—</span>
+    <div class="sheet-body">
+        <div class="sheet-cat-row">
+            <span class="sheet-cat-tag" id="sheetCat">cars</span>
         </div>
+        <div class="sheet-title" id="sheetTitle">—</div>
+        <div class="sheet-meta">BeamNG.drive mod</div>
         <div class="sheet-stats">
-            <div class="stat-box">
-                <div class="stat-val">⬇️ Free</div>
-                <div class="stat-lbl">Narx</div>
+            <div class="stat">
+                <div class="stat-val">🆓</div>
+                <div class="stat-key">Narx</div>
             </div>
-            <div class="stat-box">
+            <div class="stat">
                 <div class="stat-val" id="sheetDl">—</div>
-                <div class="stat-lbl">Yuklamalar</div>
+                <div class="stat-key">Yuklamalar</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-val">✅ Pro</div>
-                <div class="stat-lbl">Obuna</div>
+            <div class="stat">
+                <div class="stat-val">⭐ Pro</div>
+                <div class="stat-key">Tier</div>
             </div>
         </div>
-        <div class="sheet-desc-label">Tavsif</div>
+        <div class="sheet-desc-lbl">Tavsif</div>
         <p class="sheet-desc" id="sheetDesc">—</p>
-        <div class="cta-wrap">
-            <div class="fav-btn" onclick="tg.HapticFeedback.impactOccurred('light')">🔖</div>
-            <button class="cta-btn" id="sheetCtaBtn" onclick="downloadCurrent()">⬇️ Yuklab olish</button>
+        <div class="sheet-actions">
+            <div class="sheet-fav" onclick="tg.HapticFeedback.impactOccurred('light')">🤍</div>
+            <button class="sheet-dl-btn" id="sheetCtaBtn" onclick="downloadCurrent()">
+                ⬇️ Yuklab olish
+            </button>
         </div>
     </div>
 </div>
@@ -875,27 +756,24 @@
 
 <script>
 /* ══════════════════════════════════════════════════════
-   BeamModsStudio TWA — Main JavaScript
+   BeamModsStudio — Main JS
 ══════════════════════════════════════════════════════ */
 
-// ── Telegram WebApp SDK ──────────────────────────────
+// ── Telegram SDK ─────────────────────────────────────
 const tg = window.Telegram.WebApp;
 tg.expand();
 tg.ready();
 
-if (tg.colorScheme === 'light') {
-    document.documentElement.style.setProperty('--bg', '#f8f8ff');
-    document.documentElement.style.setProperty('--bg2', '#f0f0f8');
-    document.documentElement.style.setProperty('--surface', '#ffffff');
-    document.documentElement.style.setProperty('--surface2', '#f0f0f8');
-    document.documentElement.style.setProperty('--surface3', '#e4e4f0');
-    document.documentElement.style.setProperty('--text', '#1a1a2e');
-    document.documentElement.style.setProperty('--text2', '#4a4a6a');
-    document.documentElement.style.setProperty('--muted', '#8888aa');
-    document.documentElement.style.setProperty('--border', 'rgba(0,0,0,0.07)');
-}
+// Dynamic greeting
+(function() {
+    const h = new Date().getHours();
+    const el = document.getElementById('greetText');
+    if (h < 12) el.textContent = 'Xayrli tong! ☀️';
+    else if (h < 17) el.textContent = 'Xayrli kun! 👋';
+    else el.textContent = 'Xayrli kech! 🌙';
+})();
 
-// ── Foydalanuvchi ID sini olish ──────────────────────
+// ── Get Telegram User ID ──────────────────────────────
 function getTelegramUserId() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
         const id = window.Telegram.WebApp.initDataUnsafe.user.id;
@@ -904,467 +782,304 @@ function getTelegramUserId() {
     }
     if (window.Telegram?.WebApp?.initData) {
         try {
-            const params = new URLSearchParams(window.Telegram.WebApp.initData);
-            const userStr = params.get('user');
-            if (userStr) {
-                const user = JSON.parse(decodeURIComponent(userStr));
-                if (user && user.id) {
-                    try { localStorage.setItem('beam_user_id', user.id); } catch (_) {}
+            const p = new URLSearchParams(window.Telegram.WebApp.initData);
+            const u = p.get('user');
+            if (u) {
+                const user = JSON.parse(decodeURIComponent(u));
+                if (user?.id) {
+                    try { localStorage.setItem('beam_user_id', user.id); } catch(_) {}
                     return user.id;
                 }
             }
-        } catch (e) {}
+        } catch(e) {}
     }
     const urlParams = new URLSearchParams(window.location.search);
-    const urlUserId = urlParams.get('user_id') || urlParams.get('tgWebAppUserId');
-    if (urlUserId) {
-        const id = parseInt(urlUserId);
-        if (id) {
-            try { localStorage.setItem('beam_user_id', id); } catch (_) {}
-            return id;
-        }
+    const uid = urlParams.get('user_id') || urlParams.get('tgWebAppUserId');
+    if (uid) {
+        const id = parseInt(uid);
+        if (id) { try { localStorage.setItem('beam_user_id', id); } catch(_) {} return id; }
     }
-    try {
-        const cached = localStorage.getItem('beam_user_id');
-        if (cached) return parseInt(cached);
-    } catch (_) {}
+    try { const c = localStorage.getItem('beam_user_id'); if (c) return parseInt(c); } catch(_) {}
     return null;
 }
 
 // ── State ────────────────────────────────────────────
-let allMods         = [];
-let currentMod      = null;
-let currentTab      = 'catalog';
-let currentShortIdx = 0;
-let ytPlayers       = {};
-let shortMods       = [];
-
+let allMods = [], currentMod = null, currentTab = 'catalog';
+let currentShortIdx = 0, ytPlayers = {}, shortMods = [];
 const API_URL = 'https://footsore-ungraded-till.ngrok-free.dev';
 
 // ── Load catalog ─────────────────────────────────────
 async function loadCatalog() {
     const grid = document.getElementById('catalogGrid');
-    grid.innerHTML = '<div class="loader" style="grid-column:span 2"><div class="spinner"></div><span>Yuklanmoqda...</span></div>';
-
+    grid.innerHTML = '<div class="loader"><div class="spinner"></div><span>Yuklanmoqda...</span></div>';
     let data = null;
     const bust = '?_t=' + Date.now();
-
     try {
-        const res = await fetch('/api/mods' + bust, { cache: 'no-store' });
-        if (res.ok) {
-            const parsed = await res.json();
-            if (parsed && parsed.ok && Array.isArray(parsed.mods) && parsed.mods.length > 0) {
-                data = parsed;
-            }
-        }
-    } catch (e) {}
-
+        const r = await fetch('/api/mods' + bust, { cache:'no-store' });
+        if (r.ok) { const p = await r.json(); if (p?.ok && p.mods?.length) data = p; }
+    } catch(e) {}
     if (!data) {
         try {
-            const res = await fetch('/mods.json' + bust, { cache: 'no-store' });
-            if (res.ok) {
-                const parsed = await res.json();
-                if (parsed && parsed.ok && Array.isArray(parsed.mods) && parsed.mods.length > 0) {
-                    data = parsed;
-                }
-            }
-        } catch (e) {}
+            const r = await fetch('/mods.json' + bust, { cache:'no-store' });
+            if (r.ok) { const p = await r.json(); if (p?.ok && p.mods?.length) data = p; }
+        } catch(e) {}
     }
-
-    if (!data && typeof API_URL !== 'undefined' && API_URL) {
+    if (!data && API_URL) {
         try {
-            const res = await fetch(`${API_URL}/api/mods` + bust, {
-                signal:  AbortSignal.timeout(4000),
-                headers: { 'ngrok-skip-browser-warning': 'true' },
-                cache:   'no-store'
+            const r = await fetch(`${API_URL}/api/mods${bust}`, {
+                signal: AbortSignal.timeout(4000),
+                headers: { 'ngrok-skip-browser-warning': 'true' }, cache:'no-store'
             });
-            if (res.ok) {
-                const parsed = await res.json();
-                if (parsed && parsed.ok && Array.isArray(parsed.mods) && parsed.mods.length > 0) {
-                    data = parsed;
-                }
-            }
-        } catch (e) {}
+            if (r.ok) { const p = await r.json(); if (p?.ok && p.mods?.length) data = p; }
+        } catch(e) {}
     }
-
-    if (data && Array.isArray(data.mods) && data.mods.length > 0) {
+    if (data?.mods?.length) {
         allMods = data.mods.map(m => {
             let thumb = m.image_url || m.thumbnail || '';
             if (thumb.startsWith('tg_photo:')) {
-                const photoId = thumb.replace('tg_photo:', '');
-                thumb = (typeof API_URL !== 'undefined' && API_URL)
-                    ? `${API_URL}/api/photo/${photoId}`
-                    : `/api/photo/${photoId}`;
+                const pid = thumb.replace('tg_photo:', '');
+                thumb = API_URL ? `${API_URL}/api/photo/${pid}` : `/api/photo/${pid}`;
             }
             return { ...m, youtube_url: m.video_url || '', thumbnail: thumb };
         });
-    } else {
-        allMods = DEMO_MODS;
-    }
-
+    } else { allMods = DEMO_MODS; }
     shortMods = allMods.filter(m => m.youtube_url);
     renderCatalog(allMods);
     renderShortsFeed();
 }
 
-// ── Demo data ────────────────────────────────────────
+// ── Demo data ─────────────────────────────────────────
 const DEMO_MODS = [
-    { id:1, name:'BMW M5 F90 Competition', category:'cars',
-      description:'PBR teksturalar, V8 motor ovozlari bilan. Haqiqiy fizika va drift rejimi.',
-      price:49900, file_id:'demo', downloads:42,
-      youtube_url:'https://www.youtube.com/shorts/dQw4w9WgXcQ',
-      thumbnail:'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&q=80' },
-    { id:2, name:'Kamaz 6520 Offroad', category:'trucks',
-      description:"Og'ir offroad yuk mashinasi. Sakrash fizikasi va realistik zarba effektlari.",
-      price:34900, file_id:'demo', downloads:18,
-      youtube_url:'https://www.youtube.com/shorts/9bZkp7q19f0',
-      thumbnail:'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80' },
-    { id:3, name:'Toshkent Shahri Xaritasi', category:'maps',
-      description:"20+ km² ochiq dunyo, tungi chiroqlar va shahar infratuzilmasi.",
-      price:24900, file_id:'demo', downloads:31,
-      youtube_url:'https://www.youtube.com/shorts/CevxZvSJLk8',
-      thumbnail:'https://images.unsplash.com/photo-1578895101408-1a36b834405b?w=600&q=80' },
-    { id:4, name:'Nissan GT-R R35 Nismo', category:'cars',
-      description:"600 HP drift spec, Launch Control, sport egzoz ovozlari.",
-      price:59900, file_id:'demo', downloads:67,
-      youtube_url:'https://www.youtube.com/shorts/kffacxfA7G4',
-      thumbnail:'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=600&q=80' },
-    { id:5, name:'BeamNG Flatbed Truck Pro', category:'trucks',
-      description:"Offroad uchun mo'ljallangan keng yuk mashinasi.",
-      price:29900, file_id:'demo', downloads:9,
-      youtube_url:'',
-      thumbnail:'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80' },
+    { id:1, name:'BMW M5 F90 Competition', category:'cars', description:'PBR teksturalar, V8 motor ovozlari bilan. Haqiqiy fizika va drift rejimi.', price:0, file_id:'demo', downloads:42, youtube_url:'https://www.youtube.com/shorts/dQw4w9WgXcQ', thumbnail:'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&q=80' },
+    { id:2, name:'Kamaz 6520 Offroad', category:'trucks', description:"Og'ir offroad yuk mashinasi. Sakrash fizikasi.", price:0, file_id:'demo', downloads:18, youtube_url:'https://www.youtube.com/shorts/9bZkp7q19f0', thumbnail:'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80' },
+    { id:3, name:'Toshkent Shahri Xaritasi', category:'maps', description:"20+ km² ochiq dunyo, tungi chiroqlar va shahar infratuzilmasi.", price:0, file_id:'demo', downloads:31, youtube_url:'https://www.youtube.com/shorts/CevxZvSJLk8', thumbnail:'https://images.unsplash.com/photo-1578895101408-1a36b834405b?w=600&q=80' },
+    { id:4, name:'Nissan GT-R R35 Nismo', category:'cars', description:"600 HP drift spec, Launch Control, sport egzoz ovozlari.", price:0, file_id:'demo', downloads:67, youtube_url:'https://www.youtube.com/shorts/kffacxfA7G4', thumbnail:'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=600&q=80' },
+    { id:5, name:'BeamNG Flatbed Truck Pro', category:'trucks', description:"Offroad uchun mo'ljallangan keng yuk mashinasi.", price:0, file_id:'demo', downloads:9, youtube_url:'', thumbnail:'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80' },
 ];
 
-// ── Render Catalog ───────────────────────────────────
+// ── Render Catalog ─────────────────────────────────────
 function renderCatalog(mods) {
     const grid = document.getElementById('catalogGrid');
-    const countEl = document.getElementById('modCount');
-    if (countEl) countEl.textContent = mods.length + ' ta';
-
+    const cnt  = document.getElementById('modCount');
+    if (cnt) cnt.textContent = mods.length + ' ta mod';
     if (!mods.length) {
-        grid.innerHTML = '<div class="loader" style="grid-column:span 2"><span>Mod topilmadi 🙈</span></div>';
+        grid.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Mod topilmadi</div></div>`;
         return;
     }
-
-    grid.innerHTML = mods.map((mod, idx) => {
-        const isFeatured = idx === 0;
-        return `
-        <div class="mod-card${isFeatured ? ' featured' : ''}" onclick="openSheet(${mod.id})">
-            ${isFeatured ? '<div class="featured-badge">⭐ Featured</div>' : ''}
-            <div class="mod-card-img-wrap">
+    grid.innerHTML = mods.map(mod => `
+        <div class="card" onclick="openSheet(${mod.id})">
+            <div class="card-heart" onclick="event.stopPropagation(); this.classList.toggle('liked'); this.textContent = this.classList.contains('liked') ? '❤️' : '🤍'; tg.HapticFeedback.impactOccurred('light')">🤍</div>
+            <div class="card-img-wrap">
                 <img src="${mod.thumbnail}" alt="${mod.name}" loading="lazy"
                      onerror="this.src='https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400'">
-                <div class="mod-card-overlay"></div>
             </div>
-            <div class="mod-card-body">
-                <div class="mod-card-name">${mod.name}</div>
-                <div class="mod-card-footer">
-                    <span class="mod-cat-pill">${mod.category}</span>
-                    <div class="mod-dl-icon">⬇️</div>
-                </div>
+            <div class="card-body">
+                <div class="card-cat">${mod.category}</div>
+                <div class="card-name">${mod.name}</div>
+                <button class="card-dl-btn" onclick="event.stopPropagation(); openSheet(${mod.id})">
+                    ⬇️ Yuklab olish
+                </button>
             </div>
-        </div>`;
-    }).join('');
+        </div>`).join('');
 }
 
-// ── Filter & Search ──────────────────────────────────
-let activeCategory = 'all';
-
+// ── Filter & Search ────────────────────────────────────
+let activeCat = 'all';
 function filterCatalog(cat, el) {
-    activeCategory = cat;
-    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-    el.classList.add('active');
+    activeCat = cat;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
     applyFilters();
 }
-
 document.getElementById('searchInput').addEventListener('input', applyFilters);
-
 function applyFilters() {
-    const q   = document.getElementById('searchInput').value.toLowerCase();
-    const cat = activeCategory;
-    const filtered = allMods.filter(m => {
-        const matchCat  = cat === 'all' || m.category === cat;
-        const matchText = m.name.toLowerCase().includes(q)
-                       || (m.description||'').toLowerCase().includes(q);
-        return matchCat && matchText;
-    });
-    renderCatalog(filtered);
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    renderCatalog(allMods.filter(m => {
+        const mc = activeCat === 'all' || m.category === activeCat;
+        const mt = m.name.toLowerCase().includes(q) || (m.description||'').toLowerCase().includes(q);
+        return mc && mt;
+    }));
 }
 
-// ── Tab Switching ────────────────────────────────────
-function switchTab(tab, el) {
-    currentTab = tab;
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(`page-${tab}`).classList.add('active');
-    if (tab === 'shorts') {
-        playShort(currentShortIdx);
-    } else {
-        pauseAllPlayers();
-    }
-}
-
+// ── Tab / Nav ──────────────────────────────────────────
 function switchNav(tab, el) {
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    el.classList.add('active');
-    switchTab(tab, el);
+    currentTab = tab;
+    document.querySelectorAll('.nav-btn').forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(`page-${tab}`)?.classList.add('active');
+    if (tab === 'shorts') playShort(currentShortIdx); else pauseAllPlayers();
     tg.HapticFeedback.selectionChanged();
 }
 
-// ── Shorts Feed ──────────────────────────────────────
+// ── Shorts ─────────────────────────────────────────────
 function extractYTId(url) {
     if (!url) return null;
-    const patterns = [
-        /youtube\.com\/shorts\/([^?&]+)/,
-        /youtu\.be\/([^?&]+)/,
-        /youtube\.com\/watch\?v=([^&]+)/,
-    ];
-    for (const re of patterns) {
-        const m = url.match(re);
-        if (m) return m[1];
-    }
+    const pats = [/youtube\.com\/shorts\/([^?&]+)/, /youtu\.be\/([^?&]+)/, /youtube\.com\/watch\?v=([^&]+)/];
+    for (const re of pats) { const m = url.match(re); if (m) return m[1]; }
     return null;
 }
-
 function renderShortsFeed() {
-    const container = document.getElementById('shortsContainer');
-    const dotsEl    = document.getElementById('shortDots');
-    container.innerHTML = '';
-    dotsEl.innerHTML    = '';
-
+    const cont = document.getElementById('shortsContainer');
+    const dots = document.getElementById('shortDots');
+    cont.innerHTML = ''; dots.innerHTML = '';
     if (!shortMods.length) {
-        container.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:15px;text-align:center;padding:30px">
-            📹 Hozircha Shorts videolar mavjud emas.<br>Admin tez orada qo'shadi!</div>`;
+        cont.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,0.5);font-size:15px;text-align:center;padding:30px">📹 Hozircha Shorts yo'q</div>`;
         return;
     }
-
     shortMods.forEach((mod, i) => {
         const slide = document.createElement('div');
-        slide.className = 'short-slide';
-        slide.id        = `slide-${i}`;
+        slide.className = 'short-slide'; slide.id = `slide-${i}`;
         slide.style.transform = i === 0 ? 'translateY(0%)' : `translateY(${i*100}%)`;
         slide.innerHTML = `
-            <div class="yt-player-wrap" id="yt-wrap-${i}">
-                <div id="yt-player-${i}"></div>
-            </div>
+            <div class="yt-player-wrap" id="yt-wrap-${i}"><div id="yt-player-${i}"></div></div>
             <div class="short-gradient"></div>
             <div class="short-info">
                 <div class="short-mod-name">${mod.name}</div>
                 <div class="short-mod-cat">📂 ${mod.category}</div>
                 <button class="short-buy-btn" onclick="openSheet(${mod.id})">⬇️ Yuklab olish</button>
             </div>`;
-        container.appendChild(slide);
-
+        cont.appendChild(slide);
         const dot = document.createElement('div');
-        dot.className = `short-dot${i === 0 ? ' active' : ''}`;
-        dot.id        = `dot-${i}`;
-        dotsEl.appendChild(dot);
+        dot.className = `short-dot${i===0?' active':''}`; dot.id = `dot-${i}`;
+        dots.appendChild(dot);
     });
-
     if (window.ytApiReady) initAllPlayers();
-    setupSwipeGesture(container);
+    setupSwipe(cont);
 }
-
 window.ytApiReady = false;
-window.onYouTubeIframeAPIReady = function () {
-    window.ytApiReady = true;
-    if (shortMods.length > 0) initAllPlayers();
+window.onYouTubeIframeAPIReady = function() {
+    window.ytApiReady = true; if (shortMods.length) initAllPlayers();
 };
-
 function initAllPlayers() {
     shortMods.forEach((mod, i) => {
         if (ytPlayers[i]) return;
-        const ytId = extractYTId(mod.youtube_url);
-        if (!ytId) return;
+        const ytId = extractYTId(mod.youtube_url); if (!ytId) return;
         ytPlayers[i] = new YT.Player(`yt-player-${i}`, {
             videoId: ytId,
             playerVars: { autoplay:0, controls:0, loop:1, playlist:ytId, mute:0, playsinline:1, rel:0, modestbranding:1, fs:0 },
-            height: '100%', width: '100%',
-            events: {
-                onReady: (e) => {
-                    if (currentTab === 'shorts' && i === currentShortIdx) {
-                        e.target.playVideo();
-                    }
-                },
-            },
+            height:'100%', width:'100%',
+            events: { onReady: e => { if (currentTab==='shorts' && i===currentShortIdx) e.target.playVideo(); } }
         });
     });
 }
-
-function playShort(idx) {
-    if (!ytPlayers[idx] || !ytPlayers[idx].playVideo) return;
-    ytPlayers[idx].playVideo();
-}
-
-function pauseAllPlayers() {
-    Object.values(ytPlayers).forEach(p => {
-        try { if (p && p.pauseVideo) p.pauseVideo(); } catch (_) {}
-    });
-}
-
+function playShort(idx) { if (ytPlayers[idx]?.playVideo) ytPlayers[idx].playVideo(); }
+function pauseAllPlayers() { Object.values(ytPlayers).forEach(p => { try { p?.pauseVideo(); } catch(_){} }); }
 function navigateShort(dir) {
     const next = currentShortIdx + dir;
     if (next < 0 || next >= shortMods.length) return;
-    try { ytPlayers[currentShortIdx]?.pauseVideo(); } catch (_) {}
+    try { ytPlayers[currentShortIdx]?.pauseVideo(); } catch(_) {}
     shortMods.forEach((_, i) => {
-        const slide = document.getElementById(`slide-${i}`);
-        if (slide) slide.style.transform = `translateY(${(i - next) * 100}%)`;
-        const dot = document.getElementById(`dot-${i}`);
-        if (dot) dot.className = `short-dot${i === next ? ' active' : ''}`;
+        document.getElementById(`slide-${i}`)?.style && (document.getElementById(`slide-${i}`).style.transform = `translateY(${(i-next)*100}%)`);
+        const d = document.getElementById(`dot-${i}`); if (d) d.className = `short-dot${i===next?' active':''}`;
     });
     currentShortIdx = next;
     setTimeout(() => playShort(currentShortIdx), 350);
     tg.HapticFeedback.impactOccurred('light');
 }
-
-function setupSwipeGesture(container) {
-    let startY = 0, isDragging = false;
-    container.addEventListener('touchstart', e => { startY = e.touches[0].clientY; isDragging = true; }, { passive: true });
-    container.addEventListener('touchend', e => {
-        if (!isDragging) return;
-        isDragging = false;
-        const dy = startY - e.changedTouches[0].clientY;
+function setupSwipe(el) {
+    let sY = 0, drag = false;
+    el.addEventListener('touchstart', e => { sY = e.touches[0].clientY; drag = true; }, { passive:true });
+    el.addEventListener('touchend', e => {
+        if (!drag) return; drag = false;
+        const dy = sY - e.changedTouches[0].clientY;
         if (Math.abs(dy) > 50) navigateShort(dy > 0 ? 1 : -1);
-    }, { passive: true });
-    container.addEventListener('wheel', e => { navigateShort(e.deltaY > 0 ? 1 : -1); }, { passive: true });
+    }, { passive:true });
+    el.addEventListener('wheel', e => { navigateShort(e.deltaY > 0 ? 1 : -1); }, { passive:true });
 }
 
-// ── Bottom Sheet ─────────────────────────────────────
+// ── Bottom Sheet ───────────────────────────────────────
 function openSheet(modId) {
     const mod = allMods.find(m => m.id === modId);
     if (!mod) return;
     currentMod = mod;
-
     document.getElementById('sheetImg').src         = mod.thumbnail;
     document.getElementById('sheetTitle').innerText = mod.name;
     document.getElementById('sheetCat').innerText   = mod.category.toUpperCase();
     document.getElementById('sheetDesc').innerText  = mod.description || '—';
     document.getElementById('sheetDl').innerText    = (mod.downloads || 0) + '+';
-
-    const cta = document.getElementById('sheetCtaBtn');
-    cta.innerText        = '⬇️ Yuklab olish';
-    cta.disabled         = false;
-    cta.style.background = '';
-
-    document.getElementById('sheetBackdrop').classList.add('open');
+    const btn = document.getElementById('sheetCtaBtn');
+    btn.textContent = '⬇️ Yuklab olish';
+    btn.disabled = false; btn.style.background = '';
+    document.getElementById('backdrop').classList.add('open');
     document.getElementById('modSheet').classList.add('open');
     tg.HapticFeedback.impactOccurred('medium');
 }
-
 function closeSheet() {
-    document.getElementById('sheetBackdrop').classList.remove('open');
+    document.getElementById('backdrop').classList.remove('open');
     document.getElementById('modSheet').classList.remove('open');
     currentMod = null;
 }
 
-// ── Download ─────────────────────────────────────────
+// ── Download ───────────────────────────────────────────
 async function downloadCurrent() {
     if (!currentMod) return;
-    const btn    = document.getElementById('sheetCtaBtn');
-    const userId = getTelegramUserId();
+    const btn = document.getElementById('sheetCtaBtn');
+    const uid = getTelegramUserId();
 
-    if (!userId) {
+    if (!uid) {
         if (window.Telegram?.WebApp?.sendData) {
-            btn.innerText = '⏳ Botga yuborilmoqda...';
-            btn.disabled  = true;
+            btn.textContent = '⏳ Botga yuborilmoqda...'; btn.disabled = true;
             tg.HapticFeedback?.notificationOccurred?.('success');
-            tg.sendData(JSON.stringify({ action: 'download_mod', mod_id: currentMod.id }));
+            tg.sendData(JSON.stringify({ action:'download_mod', mod_id:currentMod.id }));
             setTimeout(() => { closeSheet(); tg.close(); }, 1200);
             return;
         }
-        btn.innerText = '⚠️ Telegram botdan oching';
-        setTimeout(() => { btn.innerText = '⬇️ Yuklab olish'; btn.disabled = false; }, 2500);
+        btn.textContent = '⚠️ Telegram botdan oching';
+        setTimeout(() => { btn.textContent = '⬇️ Yuklab olish'; btn.disabled = false; }, 2500);
         return;
     }
 
-    btn.innerText = '⏳ Yuborilmoqda...';
-    btn.disabled  = true;
+    btn.textContent = '⏳ Yuborilmoqda...'; btn.disabled = true;
 
-    // 1. Vercel serverless
+    // 1. Vercel
     try {
-        const res  = await fetch('/api/download', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ mod_id: currentMod.id, user_id: userId }),
-        });
-        const data = await res.json();
-        if (data.ok) {
-            btn.innerText        = '✅ Yuborildi! Chat-ni oching';
-            btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        const r = await fetch('/api/download', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ mod_id:currentMod.id, user_id:uid }) });
+        const d = await r.json();
+        if (d.ok) {
+            btn.textContent = '✅ Yuborildi! Chat-ni oching';
+            btn.style.background = '#10b981';
             tg.HapticFeedback?.notificationOccurred?.('success');
-            setTimeout(() => {
-                btn.innerText = '⬇️ Yuklab olish';
-                btn.disabled  = false;
-                btn.style.background = '';
-                closeSheet();
-            }, 3000);
+            setTimeout(() => { btn.textContent='⬇️ Yuklab olish'; btn.disabled=false; btn.style.background=''; closeSheet(); }, 3000);
             return;
-        } else if (data.error === 'demo') {
-            btn.innerText        = '🚧 Tez orada qo\'shiladi!';
-            btn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
-            setTimeout(() => {
-                btn.innerText = '⬇️ Yuklab olish';
-                btn.disabled  = false;
-                btn.style.background = '';
-            }, 2500);
+        } else if (d.error === 'demo') {
+            btn.textContent = '🚧 Tez orada!'; btn.style.background = '#f59e0b';
+            setTimeout(() => { btn.textContent='⬇️ Yuklab olish'; btn.disabled=false; btn.style.background=''; }, 2500);
             return;
         }
-    } catch (e) {}
+    } catch(e) {}
 
-    // 2. ngrok fallback
-    if (typeof API_URL !== 'undefined' && API_URL) {
+    // 2. Ngrok
+    if (API_URL) {
         try {
-            const res  = await fetch(`${API_URL}/api/download`, {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-                body:    JSON.stringify({ mod_id: currentMod.id, user_id: userId }),
-            });
-            const data = await res.json();
-            if (data.ok) {
-                btn.innerText        = '✅ Yuborildi! Chat-ni oching';
-                btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            const r = await fetch(`${API_URL}/api/download`, { method:'POST', headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'}, body:JSON.stringify({ mod_id:currentMod.id, user_id:uid }) });
+            const d = await r.json();
+            if (d.ok) {
+                btn.textContent = '✅ Yuborildi! Chat-ni oching'; btn.style.background = '#10b981';
                 tg.HapticFeedback?.notificationOccurred?.('success');
-                setTimeout(() => {
-                    btn.innerText = '⬇️ Yuklab olish';
-                    btn.disabled  = false;
-                    btn.style.background = '';
-                    closeSheet();
-                }, 3000);
+                setTimeout(() => { btn.textContent='⬇️ Yuklab olish'; btn.disabled=false; btn.style.background=''; closeSheet(); }, 3000);
                 return;
             }
-        } catch (e) {}
+        } catch(e) {}
     }
 
     // 3. sendData fallback
     if (window.Telegram?.WebApp?.sendData) {
-        btn.innerText = '⏳ Botga yuborilmoqda...';
-        tg.sendData(JSON.stringify({ action: 'download_mod', mod_id: currentMod.id }));
+        btn.textContent = '⏳ Botga yuborilmoqda...';
+        tg.sendData(JSON.stringify({ action:'download_mod', mod_id:currentMod.id }));
         setTimeout(() => { closeSheet(); tg.close(); }, 1200);
         return;
     }
 
-    btn.innerText        = '❌ Xatolik — qayta urinib ko\'ring';
-    btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-    setTimeout(() => {
-        btn.innerText = '⬇️ Yuklab olish';
-        btn.disabled  = false;
-        btn.style.background = '';
-    }, 2500);
+    btn.textContent = '❌ Xatolik — qayta urinib ko\'ring'; btn.style.background = '#ef4444';
+    setTimeout(() => { btn.textContent='⬇️ Yuklab olish'; btn.disabled=false; btn.style.background=''; }, 2500);
 }
 
-// ── My Orders & AI ────────────────────────────────────
-function openMyOrders() {
-    tg.sendData(JSON.stringify({ action: 'get_orders' }));
-    tg.HapticFeedback.impactOccurred('light');
-    tg.close();
-}
-function openAIChat() {
-    tg.sendData(JSON.stringify({ action: 'open_ai' }));
-    tg.HapticFeedback.impactOccurred('medium');
-    tg.close();
-}
+// ── Orders & AI ────────────────────────────────────────
+function openMyOrders() { tg.sendData(JSON.stringify({ action:'get_orders' })); tg.HapticFeedback.impactOccurred('light'); tg.close(); }
+function openAIChat()    { tg.sendData(JSON.stringify({ action:'open_ai' }));   tg.HapticFeedback.impactOccurred('medium'); tg.close(); }
 
-// ── Init ──────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────
 loadCatalog();
 </script>
 </body>
