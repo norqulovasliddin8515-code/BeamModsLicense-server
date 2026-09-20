@@ -6,593 +6,902 @@
     <title>BeamModsStudio</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* ─── Design Tokens ─────────────────────────────────── */
-        :root {
-            --bg:        #0d0f14;
-            --surface:   #161a24;
-            --surface2:  #1e2433;
-            --accent:    #5865f2;
-            --accent2:   #7b68ee;
-            --green:     #22c55e;
-            --text:      #f1f5f9;
-            --muted:     #64748b;
-            --border:    rgba(255,255,255,0.07);
-            --radius:    20px;
-            --shadow:    0 12px 40px rgba(0,0,0,0.5);
-        }
+    /* ═══════════════════════════════════════════════
+       DESIGN TOKENS — Modern E-Commerce Dark UI
+    ═══════════════════════════════════════════════ */
+    :root {
+        --bg:        #0a0a0f;
+        --bg2:       #111118;
+        --surface:   #16161f;
+        --surface2:  #1e1e2a;
+        --surface3:  #252535;
+        --accent:    #7c3aed;
+        --accent2:   #a855f7;
+        --accent3:   #c084fc;
+        --neon:      #8b5cf6;
+        --green:     #10b981;
+        --orange:    #f59e0b;
+        --red:       #ef4444;
+        --text:      #f8fafc;
+        --text2:     #cbd5e1;
+        --muted:     #64748b;
+        --border:    rgba(255,255,255,0.06);
+        --border2:   rgba(124,58,237,0.3);
+        --radius:    16px;
+        --radius-lg: 24px;
+        --radius-xl: 32px;
+        --shadow:    0 20px 60px rgba(0,0,0,0.6);
+        --glow:      0 0 40px rgba(124,58,237,0.25);
+    }
 
-        /* Light mode override via Telegram theme */
-        body.tg-light {
-            --bg:      #f0f4ff;
-            --surface: #ffffff;
-            --surface2:#e8edf8;
-            --text:    #1e1b4b;
-            --muted:   #64748b;
-            --border:  rgba(0,0,0,0.07);
-        }
+    * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 
-        * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+    html, body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Inter', sans-serif;
+        height: 100%;
+        overflow: hidden;
+    }
 
-        html, body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            height: 100%;
-            overflow: hidden;
-        }
+    /* ─── SCROLLBAR ─────────────────────────────── */
+    ::-webkit-scrollbar { width:3px; height:3px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:4px; }
 
-        /* ─── App Layout ─────────────────────────────────────── */
-        .app {
-            max-width: 480px;
-            margin: 0 auto;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+    /* ─── APP LAYOUT ────────────────────────────── */
+    .app {
+        max-width: 480px;
+        margin: 0 auto;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }
 
-        /* ─── Header ─────────────────────────────────────────── */
-        .header {
-            padding: 16px 18px 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-            background: var(--bg);
-        }
-        .brand {
-            font-family: 'Outfit', sans-serif;
-            font-size: 20px;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--accent), #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .header-actions { display:flex; gap:10px; }
-        .icon-pill {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            width: 38px; height: 38px;
-            display: flex; align-items:center; justify-content:center;
-            cursor: pointer; font-size: 16px;
-            transition: transform .15s;
-        }
-        .icon-pill:active { transform:scale(.92); }
+    /* ─── HEADER ────────────────────────────────── */
+    .header {
+        padding: 16px 20px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        background: var(--bg);
+        position: relative;
+        z-index: 10;
+    }
+    .header-left { display:flex; flex-direction:column; gap:2px; }
+    .header-greeting {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 500;
+        letter-spacing: 0.3px;
+    }
+    .brand {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 22px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #a78bfa, #7c3aed, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.5px;
+    }
+    .header-right { display:flex; gap:8px; align-items:center; }
+    .hdr-btn {
+        width: 40px; height: 40px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        display: flex; align-items:center; justify-content:center;
+        cursor: pointer; font-size: 17px;
+        transition: all .2s;
+        position: relative;
+    }
+    .hdr-btn:active { transform: scale(.9); background: var(--surface2); }
+    .hdr-btn .badge-dot {
+        position: absolute; top: 7px; right: 7px;
+        width: 7px; height: 7px;
+        background: var(--accent2);
+        border-radius: 50%;
+        border: 1.5px solid var(--bg);
+    }
+    .avatar-btn {
+        width: 40px; height: 40px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border-radius: 12px;
+        display: flex; align-items:center; justify-content:center;
+        font-size: 16px; cursor:pointer;
+        font-weight: 700; color: #fff;
+        box-shadow: 0 4px 14px rgba(124,58,237,0.4);
+    }
 
-        /* ─── Tab Navigation ─────────────────────────────────── */
-        .tabs {
-            display: flex;
-            background: var(--surface);
-            border-radius: 14px;
-            padding: 4px;
-            margin: 0 18px 14px;
-            flex-shrink: 0;
-        }
-        .tab {
-            flex: 1;
-            text-align: center;
-            padding: 9px 6px;
-            border-radius: 11px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--muted);
-            cursor: pointer;
-            transition: all .25s cubic-bezier(.4,0,.2,1);
-            user-select: none;
-        }
-        .tab.active {
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 4px 14px rgba(88,101,242,.4);
-        }
+    /* ─── PAGES ─────────────────────────────────── */
+    .page { display:none; flex:1; overflow:hidden; flex-direction:column; }
+    .page.active { display:flex; }
 
-        /* ─── Pages ──────────────────────────────────────────── */
-        .page { display:none; flex:1; overflow:hidden; }
-        .page.active { display:flex; flex-direction:column; }
+    /* ─── HERO BANNER ───────────────────────────── */
+    .hero-section {
+        margin: 0 20px 16px;
+        flex-shrink: 0;
+    }
+    .hero-card {
+        background: linear-gradient(135deg, #1a0533 0%, #2d1b69 50%, #1a0533 100%);
+        border: 1px solid rgba(124,58,237,0.3);
+        border-radius: var(--radius-xl);
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+        min-height: 140px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+    .hero-card::before {
+        content: '';
+        position: absolute;
+        top: -30px; right: -30px;
+        width: 160px; height: 160px;
+        background: radial-gradient(circle, rgba(168,85,247,0.4) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-card::after {
+        content: '🎮';
+        position: absolute;
+        top: 16px; right: 20px;
+        font-size: 52px;
+        opacity: 0.4;
+        transform: rotate(-12deg);
+    }
+    .hero-tag {
+        background: rgba(124,58,237,0.5);
+        border: 1px solid rgba(168,85,247,0.4);
+        color: var(--accent3);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        display: inline-block;
+        margin-bottom: 8px;
+        width: fit-content;
+    }
+    .hero-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 4px;
+        color: #fff;
+    }
+    .hero-subtitle {
+        font-size: 12px;
+        color: rgba(255,255,255,0.6);
+        font-weight: 400;
+    }
 
-        /* ─── CATALOG PAGE ───────────────────────────────────── */
-        .search-bar {
-            margin: 0 18px 14px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            display: flex; align-items:center;
-            padding: 4px 14px;
-            flex-shrink: 0;
-        }
-        .search-bar input {
-            flex:1; border:none; background:transparent;
-            color:var(--text); font-size:14px; padding:10px 0;
-            outline:none;
-        }
-        .search-bar input::placeholder { color:var(--muted); }
+    /* ─── SEARCH BAR ────────────────────────────── */
+    .search-wrap {
+        margin: 0 20px 14px;
+        flex-shrink: 0;
+    }
+    .search-bar {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        display: flex; align-items:center;
+        padding: 4px 14px;
+        transition: border-color .2s;
+    }
+    .search-bar:focus-within {
+        border-color: rgba(124,58,237,0.5);
+        box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+    .search-bar input {
+        flex:1; border:none; background:transparent;
+        color:var(--text); font-size:14px; padding:11px 0 11px 10px;
+        outline:none; font-family: 'Inter', sans-serif;
+    }
+    .search-bar input::placeholder { color:var(--muted); }
+    .search-icon { color:var(--muted); font-size:15px; flex-shrink:0; }
 
-        .filter-scroll {
-            display:flex; gap:8px;
-            overflow-x:auto; padding:0 18px 12px;
-            scrollbar-width:none; flex-shrink:0;
-        }
-        .filter-scroll::-webkit-scrollbar { display:none; }
-        .filter-chip {
-            white-space:nowrap; padding:7px 16px;
-            background:var(--surface); border:1px solid var(--border);
-            border-radius:30px; font-size:12px; font-weight:600;
-            color:var(--muted); cursor:pointer;
-            transition:all .2s;
-        }
-        .filter-chip.active {
-            background:var(--accent); color:#fff;
-            border-color:var(--accent);
-            box-shadow:0 4px 12px rgba(88,101,242,.35);
-        }
+    /* ─── SECTION HEADER ────────────────────────── */
+    .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        margin-bottom: 12px;
+        flex-shrink: 0;
+    }
+    .section-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+    }
+    .section-link {
+        font-size: 12px;
+        color: var(--accent3);
+        font-weight: 600;
+        cursor: pointer;
+    }
 
-        .catalog-grid {
-            display:grid;
-            grid-template-columns:repeat(2, 1fr);
-            gap:14px; padding:0 18px 90px;
-            overflow-y:auto; flex:1;
-        }
+    /* ─── CATEGORY CHIPS ────────────────────────── */
+    .filter-scroll {
+        display:flex; gap:8px;
+        overflow-x:auto; padding:0 20px 14px;
+        scrollbar-width:none; flex-shrink:0;
+    }
+    .filter-scroll::-webkit-scrollbar { display:none; }
+    .filter-chip {
+        white-space:nowrap; padding:8px 18px;
+        background:var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 30px;
+        font-size:13px; font-weight:600;
+        color:var(--muted); cursor:pointer;
+        transition: all .2s;
+        font-family: 'Inter', sans-serif;
+        flex-shrink: 0;
+    }
+    .filter-chip.active {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 4px 14px rgba(124,58,237,0.4);
+    }
 
-        /* Mod Card */
-        .mod-card {
-            background:var(--surface);
-            border:1px solid var(--border);
-            border-radius:var(--radius);
-            overflow:hidden;
-            cursor:pointer;
-            transition:transform .2s cubic-bezier(.4,0,.2,1);
-        }
-        .mod-card:active { transform:scale(.96); }
-        .mod-card img {
-            width:100%; height:110px;
-            object-fit:cover; display:block;
-        }
-        .mod-card-body { padding:10px 12px 12px; }
-        .mod-card-name {
-            font-size:13px; font-weight:700;
-            white-space:nowrap; overflow:hidden;
-            text-overflow:ellipsis; margin-bottom:6px;
-        }
-        .mod-card-meta {
-            display:flex; justify-content:space-between;
-            align-items:center;
-        }
-        .mod-price {
-            font-size:14px; font-weight:800;
-            font-family:'Outfit',sans-serif;
-            color:var(--accent2);
-        }
-        .mod-cat-badge {
-            font-size:10px; font-weight:700; text-transform:uppercase;
-            padding:2px 8px; border-radius:8px;
-            background:var(--surface2); color:var(--muted);
-        }
-        .free-badge { background:rgba(34,197,94,.15); color:var(--green); }
+    /* ─── CATALOG GRID ──────────────────────────── */
+    .catalog-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 20px 100px;
+    }
+    .catalog-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
 
-        /* ─── SHORTS FEED PAGE ───────────────────────────────── */
-        #page-shorts {
-            position:relative;
-            overflow:hidden;
-            touch-action:none;
-        }
+    /* ─── MOD CARD ──────────────────────────────── */
+    .mod-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all .25s cubic-bezier(.4,0,.2,1);
+        position: relative;
+    }
+    .mod-card:active { transform: scale(.95); }
+    .mod-card-img-wrap {
+        position: relative;
+        overflow: hidden;
+    }
+    .mod-card img {
+        width:100%; height:120px;
+        object-fit:cover; display:block;
+        transition: transform .3s;
+    }
+    .mod-card:active img { transform: scale(1.05); }
+    .mod-card-overlay {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 50%;
+        background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+        pointer-events: none;
+    }
+    .mod-card-body {
+        padding: 10px 12px 13px;
+    }
+    .mod-card-name {
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 8px;
+        color: var(--text);
+        font-family: 'Space Grotesk', sans-serif;
+    }
+    .mod-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .mod-cat-pill {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        background: var(--surface3);
+        color: var(--muted);
+    }
+    .mod-dl-icon {
+        width: 28px; height: 28px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border-radius: 8px;
+        display: flex; align-items:center; justify-content:center;
+        font-size: 12px;
+        box-shadow: 0 4px 10px rgba(124,58,237,0.4);
+        transition: transform .15s;
+    }
 
-        .shorts-container {
-            display:flex; flex-direction:column;
-            height:100%; overflow:hidden;
-            position:relative;
-        }
+    /* FEATURED (wide) card — 1st item */
+    .mod-card.featured {
+        grid-column: span 2;
+        display: flex;
+        flex-direction: row;
+        height: 110px;
+    }
+    .mod-card.featured .mod-card-img-wrap {
+        width: 120px;
+        flex-shrink: 0;
+    }
+    .mod-card.featured img { height: 100%; border-radius: 0; }
+    .mod-card.featured .mod-card-overlay {
+        display: none;
+    }
+    .mod-card.featured .mod-card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 14px 14px 14px;
+    }
+    .mod-card.featured .mod-card-name {
+        font-size: 14px;
+        white-space: normal;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        text-overflow: ellipsis;
+        margin-bottom: 10px;
+    }
+    .featured-badge {
+        position: absolute;
+        top: 10px; left: 10px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #fff;
+        font-size: 9px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 3px 8px;
+        border-radius: 6px;
+    }
 
-        .short-slide {
-            position:absolute; width:100%; height:100%;
-            display:flex; flex-direction:column;
-            align-items:center; justify-content:center;
-            transition:transform .4s cubic-bezier(.4,0,.2,1);
-            will-change:transform;
-        }
+    /* ─── SHORTS PAGE ───────────────────────────── */
+    #page-shorts {
+        position: relative;
+        overflow: hidden;
+        touch-action: none;
+    }
+    .shorts-container {
+        display:flex; flex-direction:column;
+        height:100%; overflow:hidden; position:relative;
+    }
+    .short-slide {
+        position:absolute; width:100%; height:100%;
+        display:flex; flex-direction:column;
+        align-items:center; justify-content:center;
+        transition:transform .4s cubic-bezier(.4,0,.2,1);
+        will-change:transform;
+    }
+    .yt-player-wrap {
+        position:absolute; top:0; left:0;
+        width:100%; height:100%; pointer-events:none;
+    }
+    .yt-player-wrap iframe { width:100%; height:100%; border:none; }
+    .short-gradient {
+        position:absolute; bottom:0; left:0;
+        width:100%; height:60%;
+        background:linear-gradient(to top, rgba(0,0,0,.92) 0%, transparent 100%);
+        pointer-events:none;
+    }
+    .short-info {
+        position:absolute; bottom:100px; left:0; right:0;
+        padding:0 20px; z-index:10;
+    }
+    .short-mod-name {
+        font-family:'Space Grotesk',sans-serif;
+        font-size:20px; font-weight:800;
+        margin-bottom:4px;
+        text-shadow:0 1px 8px rgba(0,0,0,.8);
+        letter-spacing:-0.3px;
+    }
+    .short-mod-cat {
+        font-size:13px; color:rgba(255,255,255,.65);
+        margin-bottom:14px;
+    }
+    .short-buy-btn {
+        display:inline-flex; align-items:center; gap:8px;
+        background:linear-gradient(135deg, var(--accent), var(--accent2));
+        color:#fff; border:none;
+        padding:13px 24px; border-radius:30px;
+        font-size:14px; font-weight:700; cursor:pointer;
+        box-shadow:0 6px 24px rgba(124,58,237,.5);
+        transition:transform .15s;
+        font-family:'Inter',sans-serif;
+        pointer-events:auto;
+    }
+    .short-buy-btn:active { transform:scale(.95); }
+    .scroll-hint {
+        position:absolute; right:14px;
+        display:flex; flex-direction:column;
+        align-items:center; gap:10px; z-index:20;
+        bottom:110px;
+    }
+    .scroll-hint-btn {
+        width:38px; height:38px;
+        background:rgba(255,255,255,.1);
+        backdrop-filter:blur(10px);
+        border:1px solid rgba(255,255,255,.15);
+        border-radius:50%; display:flex;
+        align-items:center; justify-content:center;
+        font-size:16px; cursor:pointer;
+        transition:transform .15s;
+    }
+    .scroll-hint-btn:active { transform:scale(.9); }
+    .short-dots {
+        position:absolute; right:14px; top:50%;
+        transform:translateY(-50%);
+        display:flex; flex-direction:column; gap:6px; z-index:20;
+    }
+    .short-dot {
+        width:4px; height:16px; border-radius:2px;
+        background:rgba(255,255,255,.25);
+        transition:all .3s;
+    }
+    .short-dot.active { background:#fff; height:28px; }
 
-        /* YouTube player container fills the slide */
-        .yt-player-wrap {
-            position:absolute; top:0; left:0;
-            width:100%; height:100%;
-            pointer-events:none; /* Let our UI layer handle events */
-        }
-        .yt-player-wrap iframe {
-            width:100%; height:100%;
-            border:none;
-        }
+    /* ─── BOTTOM SHEET ──────────────────────────── */
+    .sheet-backdrop {
+        position:fixed; inset:0;
+        background:rgba(0,0,0,.75);
+        backdrop-filter:blur(14px);
+        z-index:100; opacity:0; pointer-events:none;
+        transition:opacity .3s;
+    }
+    .sheet-backdrop.open { opacity:1; pointer-events:auto; }
+    .bottom-sheet {
+        position:fixed; bottom:0; left:50%; width:100%; max-width:480px;
+        transform:translate(-50%, 100%);
+        background: var(--surface);
+        border-radius:28px 28px 0 0;
+        padding: 0 0 36px;
+        z-index:101; max-height:92vh; overflow-y:auto;
+        transition:transform .4s cubic-bezier(.16,1,.3,1);
+        border-top: 1px solid var(--border);
+    }
+    .bottom-sheet.open { transform:translate(-50%, 0); }
 
-        /* Dark gradient overlay at bottom */
-        .short-gradient {
-            position:absolute; bottom:0; left:0;
-            width:100%; height:55%;
-            background:linear-gradient(to top, rgba(0,0,0,.9) 0%, transparent 100%);
-            pointer-events:none;
-        }
+    .sheet-handle-wrap {
+        padding: 14px 0 4px;
+        text-align: center;
+        cursor: pointer;
+    }
+    .sheet-handle {
+        width: 36px; height: 4px; border-radius: 2px;
+        background: var(--surface3);
+        display: inline-block;
+    }
+    .sheet-hero {
+        position: relative;
+        margin: 0 0 20px;
+    }
+    .sheet-img {
+        width:100%; height:220px;
+        object-fit:cover; display:block;
+    }
+    .sheet-hero-overlay {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 60%;
+        background: linear-gradient(to top, var(--surface), transparent);
+        pointer-events: none;
+    }
+    .sheet-hero-badge {
+        position: absolute;
+        top: 14px; right: 14px;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 5px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--accent3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .sheet-content {
+        padding: 0 22px;
+    }
+    .sheet-title {
+        font-family:'Space Grotesk',sans-serif;
+        font-size:22px; font-weight:800;
+        margin-bottom: 6px;
+        letter-spacing: -0.3px;
+        line-height: 1.2;
+    }
+    .sheet-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .sheet-cat {
+        font-size:12px; font-weight:700; text-transform:uppercase;
+        letter-spacing: 0.5px;
+        padding:4px 10px; border-radius:8px;
+        background:var(--surface3); color:var(--muted);
+    }
+    .sheet-dot { color: var(--surface3); }
+    .sheet-sub-info {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 500;
+    }
+    .sheet-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 14px 0;
+    }
+    .sheet-desc-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--muted);
+        margin-bottom: 8px;
+    }
+    .sheet-desc {
+        font-size: 14px;
+        line-height: 1.65;
+        color: var(--text2);
+        margin-bottom: 24px;
+    }
+    .sheet-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 22px;
+    }
+    .stat-box {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        text-align: center;
+    }
+    .stat-val {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 2px;
+    }
+    .stat-lbl {
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .cta-wrap {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .cta-btn {
+        flex: 1; padding: 16px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #fff; border: none; border-radius: 16px;
+        font-size: 15px; font-weight: 700; cursor: pointer;
+        box-shadow: 0 8px 24px rgba(124,58,237,.45);
+        transition: all .2s;
+        font-family: 'Inter', sans-serif;
+        letter-spacing: 0.2px;
+    }
+    .cta-btn:active { transform: scale(.97); }
+    .fav-btn {
+        width: 52px; height: 52px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        display: flex; align-items:center; justify-content:center;
+        font-size: 20px; cursor: pointer;
+        transition: all .2s;
+        flex-shrink: 0;
+    }
+    .fav-btn:active { transform: scale(.92); background: var(--surface3); }
 
-        /* Info bar over video */
-        .short-info {
-            position:absolute; bottom:90px; left:0; right:0;
-            padding:0 18px; z-index:10;
-        }
-        .short-mod-name {
-            font-family:'Outfit',sans-serif;
-            font-size:17px; font-weight:800;
-            margin-bottom:4px;
-            text-shadow:0 1px 6px rgba(0,0,0,.8);
-        }
-        .short-mod-cat {
-            font-size:12px; color:rgba(255,255,255,.7);
-            margin-bottom:12px;
-        }
+    /* ─── BOTTOM NAV ────────────────────────────── */
+    .bottom-nav-wrap {
+        position: fixed; bottom: 0;
+        left: 50%; transform: translateX(-50%);
+        width: 100%; max-width: 480px;
+        z-index: 60;
+        pointer-events: none;
+    }
+    .bottom-nav {
+        background: rgba(22, 22, 31, 0.95);
+        border-top: 1px solid var(--border);
+        backdrop-filter: blur(20px);
+        padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        pointer-events: auto;
+    }
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 16px;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all .2s;
+        color: var(--muted);
+        user-select: none;
+        min-width: 56px;
+    }
+    .nav-item .nav-icon { font-size: 20px; line-height: 1; }
+    .nav-item .nav-lbl {
+        font-size: 10px;
+        font-weight: 600;
+        white-space: nowrap;
+        display: none;
+        letter-spacing: 0.3px;
+    }
+    .nav-item.active {
+        color: var(--accent2);
+    }
+    .nav-item.active .nav-lbl {
+        display: block;
+        color: var(--accent2);
+    }
+    .nav-item.active .nav-icon { font-size: 22px; }
+    .nav-center-btn {
+        width: 52px; height: 52px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border-radius: 16px;
+        display: flex; align-items:center; justify-content:center;
+        font-size: 22px; cursor: pointer;
+        box-shadow: 0 6px 20px rgba(124,58,237,.5);
+        transition: transform .2s;
+        pointer-events: auto;
+        flex-shrink: 0;
+        margin-top: -8px;
+    }
+    .nav-center-btn:active { transform: scale(.9); }
 
-        /* CTA BUY button below video */
-        .short-buy-btn {
-            display:inline-flex; align-items:center; gap:8px;
-            background:linear-gradient(135deg,var(--accent),var(--accent2));
-            color:#fff; border:none;
-            padding:12px 22px; border-radius:30px;
-            font-size:14px; font-weight:700; cursor:pointer;
-            box-shadow:0 6px 20px rgba(88,101,242,.45);
-            transition:transform .15s;
-            pointer-events:auto;
-        }
-        .short-buy-btn:active { transform:scale(.95); }
+    /* ─── AI FAB ────────────────────────────────── */
+    .ai-fab {
+        position: fixed; bottom: 90px; right: 20px;
+        width: 50px; height: 50px;
+        background: linear-gradient(135deg, #7c3aed, #a855f7);
+        border-radius: 15px;
+        display: flex; align-items:center; justify-content:center;
+        font-size: 20px; cursor: pointer; z-index: 50;
+        box-shadow: 0 8px 24px rgba(124,58,237,.5);
+        transition: transform .2s;
+    }
+    .ai-fab:active { transform: scale(.9); }
 
-        /* Scroll hint arrows */
-        .scroll-hint {
-            position:absolute; right:14px;
-            display:flex; flex-direction:column;
-            align-items:center; gap:10px; z-index:20;
-            bottom:100px;
-        }
-        .scroll-hint-btn {
-            width:38px; height:38px;
-            background:rgba(255,255,255,.15);
-            backdrop-filter:blur(10px);
-            border:1px solid rgba(255,255,255,.2);
-            border-radius:50%; display:flex;
-            align-items:center; justify-content:center;
-            font-size:16px; cursor:pointer;
-            transition:transform .15s;
-        }
-        .scroll-hint-btn:active { transform:scale(.9); }
-
-        /* Progress dots */
-        .short-dots {
-            position:absolute; right:14px; top:50%;
-            transform:translateY(-50%);
-            display:flex; flex-direction:column; gap:6px; z-index:20;
-        }
-        .short-dot {
-            width:4px; height:16px; border-radius:2px;
-            background:rgba(255,255,255,.3);
-            transition:all .3s;
-        }
-        .short-dot.active {
-            background:#fff; height:28px;
-        }
-
-        /* ─── DETAIL BOTTOM SHEET ────────────────────────────── */
-        .sheet-backdrop {
-            position:fixed; inset:0;
-            background:rgba(0,0,0,.7);
-            backdrop-filter:blur(12px);
-            z-index:100; opacity:0; pointer-events:none;
-            transition:opacity .3s;
-        }
-        .sheet-backdrop.open { opacity:1; pointer-events:auto; }
-
-        .bottom-sheet {
-            position:fixed; bottom:0; left:50%; width:100%; max-width:480px;
-            transform:translate(-50%, 100%);
-            background:var(--surface);
-            border-radius:28px 28px 0 0;
-            padding:20px 22px 36px;
-            z-index:101; max-height:90vh; overflow-y:auto;
-            transition:transform .4s cubic-bezier(.16,1,.3,1);
-        }
-        .bottom-sheet.open { transform:translate(-50%, 0); }
-
-        .sheet-handle {
-            width:38px; height:4px; border-radius:2px;
-            background:var(--muted); margin:0 auto 18px;
-        }
-
-        .sheet-img {
-            width:100%; height:180px; object-fit:cover;
-            border-radius:16px; margin-bottom:16px;
-        }
-
-        .sheet-title {
-            font-family:'Outfit',sans-serif;
-            font-size:20px; font-weight:800; margin-bottom:6px;
-        }
-
-        .sheet-badge-row {
-            display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;
-        }
-        .badge {
-            font-size:11px; font-weight:700; text-transform:uppercase;
-            padding:4px 10px; border-radius:10px;
-        }
-        .badge-cat  { background:var(--surface2); color:var(--muted); }
-        .badge-free { background:rgba(34,197,94,.15); color:var(--green); }
-        .badge-paid { background:rgba(88,101,242,.15); color:var(--accent2); }
-
-        .sheet-desc {
-            font-size:14px; line-height:1.6;
-            color:var(--muted); margin-bottom:22px;
-        }
-
-        .sheet-action-row {
-            display:flex; gap:12px; align-items:center;
-        }
-
-        .price-big {
-            font-family:'Outfit',sans-serif;
-            font-size:24px; font-weight:800;
-            color:var(--text);
-        }
-
-        .cta-btn {
-            flex:1; padding:15px;
-            background:linear-gradient(135deg,var(--accent),var(--accent2));
-            color:#fff; border:none; border-radius:18px;
-            font-size:15px; font-weight:700; cursor:pointer;
-            box-shadow:0 8px 20px rgba(88,101,242,.4);
-            transition:transform .15s;
-        }
-        .cta-btn:active { transform:scale(.97); }
-        .cta-btn.free {
-            background:linear-gradient(135deg,var(--green),#16a34a);
-            box-shadow:0 8px 20px rgba(34,197,94,.3);
-        }
-
-        /* ─── Payment method selector ────────────────────────── */
-        .pay-methods {
-            display:flex; gap:10px; margin-bottom:18px;
-        }
-        .pay-method {
-            flex:1; padding:10px; border-radius:14px;
-            border:2px solid var(--border);
-            background:var(--surface2);
-            text-align:center; cursor:pointer;
-            font-size:13px; font-weight:700;
-            transition:all .2s;
-        }
-        .pay-method.active {
-            border-color:var(--accent);
-            background:rgba(88,101,242,.15);
-            color:var(--accent2);
-        }
-
-        /* ─── AI Chat ─────────────────────────────────────────── */
-        .ai-fab {
-            position:fixed; bottom:85px; right:18px;
-            width:52px; height:52px;
-            background:linear-gradient(135deg,#7b68ee,#a855f7);
-            border-radius:50%; display:flex;
-            align-items:center; justify-content:center;
-            font-size:22px; cursor:pointer; z-index:50;
-            box-shadow:0 8px 24px rgba(168,85,247,.4);
-            transition:transform .2s;
-        }
-        .ai-fab:active { transform:scale(.9); }
-
-        /* ─── Bottom Nav (Theme-matched) ─────────────────────── */
-        .bottom-nav-wrap {
-            position:fixed; bottom:18px;
-            left:50%; transform:translateX(-50%);
-            width:100%; max-width:480px;
-            padding:0 18px; z-index:60;
-            pointer-events:none;
-        }
-        .bottom-nav {
-            background:var(--surface);
-            border:1px solid var(--border);
-            border-radius:50px; padding:6px;
-            display:flex; align-items:center;
-            justify-content:space-between;
-            box-shadow:0 12px 30px rgba(0,0,0,.4);
-            pointer-events:auto;
-        }
-        .nav-item {
-            display:flex; align-items:center;
-            gap:7px; padding:10px 14px;
-            border-radius:35px;
-            color:var(--muted); cursor:pointer;
-            transition:all .3s cubic-bezier(.4,0,.2,1);
-            font-size:20px; user-select:none;
-        }
-        .nav-item .nav-lbl {
-            display:none; font-size:13px;
-            font-weight:700; color:var(--accent);
-            white-space:nowrap;
-        }
-        .nav-item.active {
-            background:rgba(88,101,242,.15);
-            color:var(--accent);
-            padding:10px 18px;
-        }
-        .nav-item.active .nav-lbl { display:block; }
-
-        /* ─── Loading ─────────────────────────────────────────── */
-        .loader {
-            display:flex; flex-direction:column;
-            align-items:center; justify-content:center;
-            gap:12px; padding:60px 0;
-            color:var(--muted); font-size:14px;
-        }
-        .spinner {
-            width:36px; height:36px;
-            border:3px solid var(--border);
-            border-top-color:var(--accent);
-            border-radius:50%;
-            animation:spin .7s linear infinite;
-        }
-        @keyframes spin { to { transform:rotate(360deg); } }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width:4px; height:4px; }
-        ::-webkit-scrollbar-track { background:transparent; }
-        ::-webkit-scrollbar-thumb { background:var(--surface2); border-radius:4px; }
+    /* ─── LOADER ────────────────────────────────── */
+    .loader {
+        display:flex; flex-direction:column;
+        align-items:center; justify-content:center;
+        gap:12px; padding:60px 0;
+        color:var(--muted); font-size:14px;
+        grid-column: span 2;
+    }
+    .spinner {
+        width:32px; height:32px;
+        border: 3px solid var(--surface3);
+        border-top-color: var(--accent);
+        border-radius:50%;
+        animation:spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
     </style>
 </head>
 <body>
 <div class="app">
 
-    <!-- ── Header ─────────────────────────────────────────── -->
+    <!-- ── HEADER ──────────────────────────────────── -->
     <header class="header">
-        <span class="brand">⚡ BeamModsStudio</span>
-        <div class="header-actions">
-            <div class="icon-pill" onclick="openMyOrders()">🛒</div>
-            <div class="icon-pill" onclick="openAIChat()">🤖</div>
+        <div class="header-left">
+            <span class="header-greeting">Xush kelibsiz 👋</span>
+            <span class="brand">BeamMods</span>
+        </div>
+        <div class="header-right">
+            <div class="hdr-btn" onclick="openMyOrders()">
+                🛒
+                <span class="badge-dot"></span>
+            </div>
+            <div class="avatar-btn" onclick="openAIChat()">AI</div>
         </div>
     </header>
 
-    <!-- ── Tab Bar ────────────────────────────────────────── -->
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('catalog', this)">🎮 Katalog</div>
-        <div class="tab"        onclick="switchTab('shorts',  this)">📱 Shorts</div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════
          PAGE: CATALOG
-    ══════════════════════════════════════════════════════ -->
-    <div class="page active" id="page-catalog">
-        <!-- Search -->
-        <div class="search-bar">
-            <span style="color:var(--muted);margin-right:10px;font-size:16px">🔍</span>
-            <input type="text" id="searchInput" placeholder="Mod yoki xarita izlash...">
+    ══════════════════════════════════════════════ -->
+    <div class="page active" id="page-catalog" style="overflow:hidden; display:flex; flex-direction:column;">
+
+        <!-- Hero Banner -->
+        <div class="hero-section">
+            <div class="hero-card">
+                <span class="hero-tag">⚡ Yangi modlar</span>
+                <div class="hero-title">BeamNG.drive<br>Modlar Katalogi</div>
+                <div class="hero-subtitle">Premium modlar — obuna orqali bepul</div>
+            </div>
         </div>
 
-        <!-- Category Filters -->
+        <!-- Search -->
+        <div class="search-wrap">
+            <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Mod yoki xarita izlash...">
+            </div>
+        </div>
+
+        <!-- Category Chips -->
         <div class="filter-scroll">
-            <div class="filter-chip active" onclick="filterCatalog('all', this)">✨ Barchasi</div>
+            <div class="filter-chip active" onclick="filterCatalog('all', this)">Barchasi</div>
             <div class="filter-chip"        onclick="filterCatalog('cars', this)">🚗 Cars</div>
             <div class="filter-chip"        onclick="filterCatalog('trucks', this)">🚛 Trucks</div>
             <div class="filter-chip"        onclick="filterCatalog('maps', this)">🗺️ Maps</div>
-            <div class="filter-chip"        onclick="filterCatalog('3d_models', this)">🎨 3D Models</div>
+            <div class="filter-chip"        onclick="filterCatalog('3d_models', this)">🎨 3D</div>
+        </div>
+
+        <!-- Section label -->
+        <div class="section-head">
+            <span class="section-title">Barcha modlar</span>
+            <span class="section-link" id="modCount"></span>
         </div>
 
         <!-- Grid -->
-        <div class="catalog-grid" id="catalogGrid">
-            <div class="loader">
-                <div class="spinner"></div>
-                <span>Yuklanmoqda...</span>
+        <div class="catalog-scroll">
+            <div class="catalog-grid" id="catalogGrid">
+                <div class="loader" style="grid-column:span 2">
+                    <div class="spinner"></div>
+                    <span>Yuklanmoqda...</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════
-         PAGE: SHORTS FEED (TikTok-style YouTube Shorts)
-    ══════════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════
+         PAGE: SHORTS FEED
+    ══════════════════════════════════════════════ -->
     <div class="page" id="page-shorts">
-        <div class="shorts-container" id="shortsContainer">
-            <!-- Slides injected by JS -->
-        </div>
-
-        <!-- Navigation arrows -->
+        <div class="shorts-container" id="shortsContainer"></div>
         <div class="scroll-hint">
             <div class="scroll-hint-btn" onclick="navigateShort(-1)">▲</div>
             <div class="scroll-hint-btn" onclick="navigateShort(1)">▼</div>
         </div>
-
-        <!-- Progress dots -->
         <div class="short-dots" id="shortDots"></div>
     </div>
 
 </div><!-- .app -->
 
-<!-- ── AI FAB ────────────────────────────────────────────── -->
+<!-- ── AI FAB ──────────────────────────────────────── -->
 <div class="ai-fab" onclick="openAIChat()">✨</div>
 
-<!-- ── Bottom Navigation ──────────────────────────────────── -->
+<!-- ── BOTTOM NAV ──────────────────────────────────── -->
 <div class="bottom-nav-wrap">
     <nav class="bottom-nav">
         <div class="nav-item active" onclick="switchNav('catalog', this)">
-            🏠 <span class="nav-lbl">Home</span>
+            <span class="nav-icon">🏠</span>
+            <span class="nav-lbl">Home</span>
         </div>
-        <div class="nav-item" onclick="switchNav('shorts', this)">📱</div>
-        <div class="nav-item" onclick="openMyOrders()">🛒</div>
-        <div class="nav-item" onclick="switchNav('ai', this)">🤖</div>
-        <div class="nav-item" onclick="openAIChat()">👤</div>
+        <div class="nav-item" onclick="switchNav('shorts', this)">
+            <span class="nav-icon">📱</span>
+            <span class="nav-lbl">Shorts</span>
+        </div>
+        <div class="nav-center-btn" onclick="openAIChat()">✨</div>
+        <div class="nav-item" onclick="openMyOrders()">
+            <span class="nav-icon">🛒</span>
+            <span class="nav-lbl">Orders</span>
+        </div>
+        <div class="nav-item" onclick="openAIChat()">
+            <span class="nav-icon">👤</span>
+            <span class="nav-lbl">Profile</span>
+        </div>
     </nav>
 </div>
 
-<!-- ── Mod Detail Bottom Sheet ────────────────────────────── -->
+<!-- ── MOD DETAIL BOTTOM SHEET ─────────────────────── -->
 <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
 <div class="bottom-sheet" id="modSheet">
-    <div class="sheet-handle" onclick="closeSheet()"></div>
-    <img id="sheetImg" class="sheet-img" src="" alt="">
-    <h2 class="sheet-title"  id="sheetTitle">—</h2>
-    <div class="sheet-badge-row">
-        <span class="badge badge-cat" id="sheetCat">—</span>
+    <div class="sheet-handle-wrap" onclick="closeSheet()">
+        <div class="sheet-handle"></div>
     </div>
-    <p class="sheet-desc" id="sheetDesc">—</p>
-
-    <div class="sheet-action-row">
-        <button class="cta-btn" id="sheetCtaBtn" onclick="downloadCurrent()" style="width:100%">⬇️ Yuklab olish</button>
+    <div class="sheet-hero">
+        <img id="sheetImg" class="sheet-img" src="" alt=""
+             onerror="this.src='https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600'">
+        <div class="sheet-hero-overlay"></div>
+        <span class="sheet-hero-badge" id="sheetCat">—</span>
+    </div>
+    <div class="sheet-content">
+        <h2 class="sheet-title" id="sheetTitle">—</h2>
+        <div class="sheet-meta">
+            <span class="sheet-sub-info">BeamNG.drive mod</span>
+            <span class="sheet-dot">•</span>
+            <span class="sheet-sub-info" id="sheetSize">—</span>
+        </div>
+        <div class="sheet-stats">
+            <div class="stat-box">
+                <div class="stat-val">⬇️ Free</div>
+                <div class="stat-lbl">Narx</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val" id="sheetDl">—</div>
+                <div class="stat-lbl">Yuklamalar</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val">✅ Pro</div>
+                <div class="stat-lbl">Obuna</div>
+            </div>
+        </div>
+        <div class="sheet-desc-label">Tavsif</div>
+        <p class="sheet-desc" id="sheetDesc">—</p>
+        <div class="cta-wrap">
+            <div class="fav-btn" onclick="tg.HapticFeedback.impactOccurred('light')">🔖</div>
+            <button class="cta-btn" id="sheetCtaBtn" onclick="downloadCurrent()">⬇️ Yuklab olish</button>
+        </div>
     </div>
 </div>
 
-<!-- YouTube IFrame API (loads asynchronously) -->
+<!-- YouTube IFrame API -->
 <script>
-    // ── YouTube IFrame API loader ──────────────────────────
     var tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     document.head.appendChild(tag);
 </script>
 
 <script>
-/* ══════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
    BeamModsStudio TWA — Main JavaScript
-   ══════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 
-// ── Telegram WebApp SDK ────────────────────────────────────
+// ── Telegram WebApp SDK ──────────────────────────────
 const tg = window.Telegram.WebApp;
 tg.expand();
 tg.ready();
 
-// Dark / Light mode adaptation
 if (tg.colorScheme === 'light') {
-    document.body.classList.add('tg-light');
+    document.documentElement.style.setProperty('--bg', '#f8f8ff');
+    document.documentElement.style.setProperty('--bg2', '#f0f0f8');
+    document.documentElement.style.setProperty('--surface', '#ffffff');
+    document.documentElement.style.setProperty('--surface2', '#f0f0f8');
+    document.documentElement.style.setProperty('--surface3', '#e4e4f0');
+    document.documentElement.style.setProperty('--text', '#1a1a2e');
+    document.documentElement.style.setProperty('--text2', '#4a4a6a');
+    document.documentElement.style.setProperty('--muted', '#8888aa');
+    document.documentElement.style.setProperty('--border', 'rgba(0,0,0,0.07)');
 }
 
-// ── Foydalanuvchi ID sini olish (bir nechta usul) ──────────
+// ── Foydalanuvchi ID sini olish ──────────────────────
 function getTelegramUserId() {
-    // 1-usul: initDataUnsafe.user.id (eng to'g'ri)
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
         const id = window.Telegram.WebApp.initDataUnsafe.user.id;
         try { localStorage.setItem('beam_user_id', id); } catch (_) {}
         return id;
     }
-
-    // 2-usul: initData string-dan parse qilish
     if (window.Telegram?.WebApp?.initData) {
         try {
             const params = new URLSearchParams(window.Telegram.WebApp.initData);
@@ -604,12 +913,8 @@ function getTelegramUserId() {
                     return user.id;
                 }
             }
-        } catch (e) {
-            console.warn('initData parse error:', e);
-        }
+        } catch (e) {}
     }
-
-    // 3-usul: URL parametridan olish (?user_id=12345678)
     const urlParams = new URLSearchParams(window.location.search);
     const urlUserId = urlParams.get('user_id') || urlParams.get('tgWebAppUserId');
     if (urlUserId) {
@@ -619,38 +924,31 @@ function getTelegramUserId() {
             return id;
         }
     }
-
-    // 4-usul: Cached localStorage dan olish
     try {
         const cached = localStorage.getItem('beam_user_id');
         if (cached) return parseInt(cached);
     } catch (_) {}
-
     return null;
 }
 
-// ── State ──────────────────────────────────────────────────
+// ── State ────────────────────────────────────────────
 let allMods         = [];
 let currentMod      = null;
-let selectedPay     = 'click';
 let currentTab      = 'catalog';
 let currentShortIdx = 0;
 let ytPlayers       = {};
 let shortMods       = [];
 
-// ── API Configuration ──────────────────────────────────────
-// Ngrok public URL — kompyuteringizdagi Python API ga ulanadi
 const API_URL = 'https://footsore-ungraded-till.ngrok-free.dev';
 
-// ── Load catalog from live API (with demo fallback) ────────
+// ── Load catalog ─────────────────────────────────────
 async function loadCatalog() {
     const grid = document.getElementById('catalogGrid');
-    grid.innerHTML = '<div class="loader"><div class="spinner"></div><span>Yuklanmoqda...</span></div>';
+    grid.innerHTML = '<div class="loader" style="grid-column:span 2"><div class="spinner"></div><span>Yuklanmoqda...</span></div>';
 
     let data = null;
     const bust = '?_t=' + Date.now();
 
-    // 1. Birinchi o'rinda o'z domenimizdagi (Vercel) /api/mods dan olamiz (eng tez, 100% ishonchli, CORS yo'q)
     try {
         const res = await fetch('/api/mods' + bust, { cache: 'no-store' });
         if (res.ok) {
@@ -659,11 +957,8 @@ async function loadCatalog() {
                 data = parsed;
             }
         }
-    } catch (e) {
-        console.warn('Vercel API fetch error:', e);
-    }
+    } catch (e) {}
 
-    // 2. Agar /api/mods bo'lmasa, to'g'ridan-to'g'ri /mods.json statik faylini sinaymiz
     if (!data) {
         try {
             const res = await fetch('/mods.json' + bust, { cache: 'no-store' });
@@ -673,12 +968,9 @@ async function loadCatalog() {
                     data = parsed;
                 }
             }
-        } catch (e) {
-            console.warn('mods.json fetch error:', e);
-        }
+        } catch (e) {}
     }
 
-    // 3. Agar Vercel da bo'lmasa, tashqi ngrok / local API ni sinaymiz
     if (!data && typeof API_URL !== 'undefined' && API_URL) {
         try {
             const res = await fetch(`${API_URL}/api/mods` + bust, {
@@ -692,31 +984,21 @@ async function loadCatalog() {
                     data = parsed;
                 }
             }
-        } catch (e) {
-            console.warn('Ngrok external API fetch error:', e);
-        }
+        } catch (e) {}
     }
 
-    // Natijani qayta ishlash
     if (data && Array.isArray(data.mods) && data.mods.length > 0) {
         allMods = data.mods.map(m => {
-            // Thumbnail: agar tg_photo: bilan boshlansa → /api/photo/ proxy
             let thumb = m.image_url || m.thumbnail || '';
             if (thumb.startsWith('tg_photo:')) {
                 const photoId = thumb.replace('tg_photo:', '');
-                // Ngrok API orqali photo proxy
                 thumb = (typeof API_URL !== 'undefined' && API_URL)
                     ? `${API_URL}/api/photo/${photoId}`
                     : `/api/photo/${photoId}`;
             }
-            return {
-                ...m,
-                youtube_url: m.video_url || '',
-                thumbnail:   thumb,
-            };
+            return { ...m, youtube_url: m.video_url || '', thumbnail: thumb };
         });
     } else {
-        console.warn('[API] Barcha jonli manbalar topilmadi, demo data ishlatiladi');
         allMods = DEMO_MODS;
     }
 
@@ -725,62 +1007,68 @@ async function loadCatalog() {
     renderShortsFeed();
 }
 
-// ── Demo fallback data ─────────────────────────────────────
+// ── Demo data ────────────────────────────────────────
 const DEMO_MODS = [
     { id:1, name:'BMW M5 F90 Competition', category:'cars',
-      description:'PBR teksturalar, V8 motor ovozlari.',
-      price:49900, file_id:'demo',
+      description:'PBR teksturalar, V8 motor ovozlari bilan. Haqiqiy fizika va drift rejimi.',
+      price:49900, file_id:'demo', downloads:42,
       youtube_url:'https://www.youtube.com/shorts/dQw4w9WgXcQ',
       thumbnail:'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&q=80' },
     { id:2, name:'Kamaz 6520 Offroad', category:'trucks',
-      description:"Og'ir offroad yuk mashinasi.",
-      price:34900, file_id:'demo',
+      description:"Og'ir offroad yuk mashinasi. Sakrash fizikasi va realistik zarba effektlari.",
+      price:34900, file_id:'demo', downloads:18,
       youtube_url:'https://www.youtube.com/shorts/9bZkp7q19f0',
       thumbnail:'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80' },
     { id:3, name:'Toshkent Shahri Xaritasi', category:'maps',
-      description:"20+ km² ochiq dunyo, tungi chiroqlar.",
-      price:24900, file_id:'demo',
+      description:"20+ km² ochiq dunyo, tungi chiroqlar va shahar infratuzilmasi.",
+      price:24900, file_id:'demo', downloads:31,
       youtube_url:'https://www.youtube.com/shorts/CevxZvSJLk8',
       thumbnail:'https://images.unsplash.com/photo-1578895101408-1a36b834405b?w=600&q=80' },
     { id:4, name:'Nissan GT-R R35 Nismo', category:'cars',
-      description:"600 HP drift spec, Launch Control.",
-      price:59900, file_id:'demo',
+      description:"600 HP drift spec, Launch Control, sport egzoz ovozlari.",
+      price:59900, file_id:'demo', downloads:67,
       youtube_url:'https://www.youtube.com/shorts/kffacxfA7G4',
       thumbnail:'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=600&q=80' },
     { id:5, name:'BeamNG Flatbed Truck Pro', category:'trucks',
-      description:"Offroad uchun keng yuk mashinasi.",
-      price:29900, file_id:'demo',
+      description:"Offroad uchun mo'ljallangan keng yuk mashinasi.",
+      price:29900, file_id:'demo', downloads:9,
       youtube_url:'',
       thumbnail:'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80' },
 ];
 
-
-
-
-
-// ── Render Catalog Grid ───────────────────────────────────
+// ── Render Catalog ───────────────────────────────────
 function renderCatalog(mods) {
     const grid = document.getElementById('catalogGrid');
+    const countEl = document.getElementById('modCount');
+    if (countEl) countEl.textContent = mods.length + ' ta';
+
     if (!mods.length) {
-        grid.innerHTML = '<div class="loader"><span>Mod topilmadi 🙈</span></div>';
+        grid.innerHTML = '<div class="loader" style="grid-column:span 2"><span>Mod topilmadi 🙈</span></div>';
         return;
     }
-    grid.innerHTML = mods.map(mod => {
+
+    grid.innerHTML = mods.map((mod, idx) => {
+        const isFeatured = idx === 0;
         return `
-            <div class="mod-card" onclick="openSheet(${mod.id})">
+        <div class="mod-card${isFeatured ? ' featured' : ''}" onclick="openSheet(${mod.id})">
+            ${isFeatured ? '<div class="featured-badge">⭐ Featured</div>' : ''}
+            <div class="mod-card-img-wrap">
                 <img src="${mod.thumbnail}" alt="${mod.name}" loading="lazy"
                      onerror="this.src='https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400'">
-                <div class="mod-card-body">
-                    <div class="mod-card-name">${mod.name}</div>
-                    <div class="mod-card-meta">
-                        <span class="mod-cat-badge">${mod.category}</span>
-                    </div>
+                <div class="mod-card-overlay"></div>
+            </div>
+            <div class="mod-card-body">
+                <div class="mod-card-name">${mod.name}</div>
+                <div class="mod-card-footer">
+                    <span class="mod-cat-pill">${mod.category}</span>
+                    <div class="mod-dl-icon">⬇️</div>
                 </div>
-            </div>`;
+            </div>
+        </div>`;
     }).join('');
 }
 
-// ── Filter & Search ───────────────────────────────────────
+// ── Filter & Search ──────────────────────────────────
 let activeCategory = 'all';
 
 function filterCatalog(cat, el) {
@@ -804,19 +1092,14 @@ function applyFilters() {
     renderCatalog(filtered);
 }
 
-// ── Tab Switching ─────────────────────────────────────────
+// ── Tab Switching ────────────────────────────────────
 function switchTab(tab, el) {
     currentTab = tab;
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(`page-${tab}`).classList.add('active');
-
     if (tab === 'shorts') {
-        // Aktiv videoni ijro etish
         playShort(currentShortIdx);
     } else {
-        // Shorts dan chiqilsa aktiv videni to'xtatish
         pauseAllPlayers();
     }
 }
@@ -824,18 +1107,11 @@ function switchTab(tab, el) {
 function switchNav(tab, el) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     el.classList.add('active');
-    if (tab === 'catalog' || tab === 'shorts') {
-        const tabEl = document.querySelector(`.tab:nth-child(${tab==='catalog'?1:2})`);
-        switchTab(tab, tabEl);
-    }
+    switchTab(tab, el);
     tg.HapticFeedback.selectionChanged();
 }
 
-// ══════════════════════════════════════════════════════════
-//  YOUTUBE SHORTS FEED (TikTok-style vertical swiper)
-// ══════════════════════════════════════════════════════════
-
-// Extracts YouTube video ID from any YouTube URL format
+// ── Shorts Feed ──────────────────────────────────────
 function extractYTId(url) {
     if (!url) return null;
     const patterns = [
@@ -857,92 +1133,55 @@ function renderShortsFeed() {
     dotsEl.innerHTML    = '';
 
     if (!shortMods.length) {
-        container.innerHTML = `
-            <div style="display:flex;align-items:center;justify-content:center;
-                height:100%;color:var(--muted);font-size:15px;text-align:center;padding:30px">
-                📹 Hozircha Shorts videolar mavjud emas.<br>Admin tez orada qo'shadi!
-            </div>`;
+        container.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:15px;text-align:center;padding:30px">
+            📹 Hozircha Shorts videolar mavjud emas.<br>Admin tez orada qo'shadi!</div>`;
         return;
     }
 
     shortMods.forEach((mod, i) => {
-        const ytId = extractYTId(mod.youtube_url);
-
         const slide = document.createElement('div');
         slide.className = 'short-slide';
         slide.id        = `slide-${i}`;
-        slide.style.transform = i === 0 ? 'translateY(0%)' : `translateY(${(i)*100}%)`;
-
+        slide.style.transform = i === 0 ? 'translateY(0%)' : `translateY(${i*100}%)`;
         slide.innerHTML = `
-            <!-- YouTube Player (will be initialized by IFrame API) -->
             <div class="yt-player-wrap" id="yt-wrap-${i}">
                 <div id="yt-player-${i}"></div>
             </div>
-
-            <!-- Gradient overlay -->
             <div class="short-gradient"></div>
-
-            <!-- Mod info + BUY button (Telegram-style CTA!) -->
             <div class="short-info">
                 <div class="short-mod-name">${mod.name}</div>
                 <div class="short-mod-cat">📂 ${mod.category}</div>
-                <button class="short-buy-btn" onclick="openSheet(${mod.id})">
-                    ⬇️ Yuklab olish
-                </button>
+                <button class="short-buy-btn" onclick="openSheet(${mod.id})">⬇️ Yuklab olish</button>
             </div>`;
-
         container.appendChild(slide);
 
-        // Progress dot
         const dot = document.createElement('div');
         dot.className = `short-dot${i === 0 ? ' active' : ''}`;
         dot.id        = `dot-${i}`;
         dotsEl.appendChild(dot);
     });
 
-    // Initialize YouTube players if API is ready
-    if (window.ytApiReady) {
-        initAllPlayers();
-    }
-
-    // Touch swipe handling
+    if (window.ytApiReady) initAllPlayers();
     setupSwipeGesture(container);
 }
 
-// ── YouTube IFrame API Callback ───────────────────────────
 window.ytApiReady = false;
 window.onYouTubeIframeAPIReady = function () {
     window.ytApiReady = true;
-    if (shortMods.length > 0) {
-        initAllPlayers();
-    }
+    if (shortMods.length > 0) initAllPlayers();
 };
 
 function initAllPlayers() {
     shortMods.forEach((mod, i) => {
-        if (ytPlayers[i]) return; // Already initialized
+        if (ytPlayers[i]) return;
         const ytId = extractYTId(mod.youtube_url);
         if (!ytId) return;
-
         ytPlayers[i] = new YT.Player(`yt-player-${i}`, {
-            videoId:    ytId,
-            playerVars: {
-                autoplay:       0,    // Hech qachon avtomatik boshlanmasin
-                controls:       0,
-                loop:           1,
-                playlist:       ytId,
-                mute:           0,
-                playsinline:    1,
-                rel:            0,
-                modestbranding: 1,
-                fs:             0,
-            },
-            height: '100%',
-            width:  '100%',
+            videoId: ytId,
+            playerVars: { autoplay:0, controls:0, loop:1, playlist:ytId, mute:0, playsinline:1, rel:0, modestbranding:1, fs:0 },
+            height: '100%', width: '100%',
             events: {
                 onReady: (e) => {
-                    // MUHIM: faqat Shorts tab ochiq VA bu birinchi video bo'lsa play qilamiz
-                    // currentTab 'catalog' bo'lsa — hech qachon autoplay qilmasin!
                     if (currentTab === 'shorts' && i === currentShortIdx) {
                         e.target.playVideo();
                     }
@@ -966,51 +1205,31 @@ function pauseAllPlayers() {
 function navigateShort(dir) {
     const next = currentShortIdx + dir;
     if (next < 0 || next >= shortMods.length) return;
-
-    // Pause current
     try { ytPlayers[currentShortIdx]?.pauseVideo(); } catch (_) {}
-
-    // Animate slides
     shortMods.forEach((_, i) => {
         const slide = document.getElementById(`slide-${i}`);
         if (slide) slide.style.transform = `translateY(${(i - next) * 100}%)`;
         const dot = document.getElementById(`dot-${i}`);
         if (dot) dot.className = `short-dot${i === next ? ' active' : ''}`;
     });
-
     currentShortIdx = next;
-
-    // Play new slide with small delay (let animation finish)
     setTimeout(() => playShort(currentShortIdx), 350);
     tg.HapticFeedback.impactOccurred('light');
 }
 
-// ── Touch Swipe for Shorts ────────────────────────────────
 function setupSwipeGesture(container) {
     let startY = 0, isDragging = false;
-
-    container.addEventListener('touchstart', e => {
-        startY     = e.touches[0].clientY;
-        isDragging = true;
-    }, { passive: true });
-
+    container.addEventListener('touchstart', e => { startY = e.touches[0].clientY; isDragging = true; }, { passive: true });
     container.addEventListener('touchend', e => {
         if (!isDragging) return;
         isDragging = false;
         const dy = startY - e.changedTouches[0].clientY;
         if (Math.abs(dy) > 50) navigateShort(dy > 0 ? 1 : -1);
     }, { passive: true });
-
-    // Mouse scroll support (desktop/PC)
-    container.addEventListener('wheel', e => {
-        navigateShort(e.deltaY > 0 ? 1 : -1);
-    }, { passive: true });
+    container.addEventListener('wheel', e => { navigateShort(e.deltaY > 0 ? 1 : -1); }, { passive: true });
 }
 
-// ══════════════════════════════════════════════════════════
-//  MOD DETAIL BOTTOM SHEET
-// ══════════════════════════════════════════════════════════
-
+// ── Bottom Sheet ─────────────────────────────────────
 function openSheet(modId) {
     const mod = allMods.find(m => m.id === modId);
     if (!mod) return;
@@ -1018,14 +1237,13 @@ function openSheet(modId) {
 
     document.getElementById('sheetImg').src         = mod.thumbnail;
     document.getElementById('sheetTitle').innerText = mod.name;
-    document.getElementById('sheetCat').innerText   = mod.category;
+    document.getElementById('sheetCat').innerText   = mod.category.toUpperCase();
     document.getElementById('sheetDesc').innerText  = mod.description || '—';
+    document.getElementById('sheetDl').innerText    = (mod.downloads || 0) + '+';
 
-    // Har doim "Yuklab olish" tugmasi
     const cta = document.getElementById('sheetCtaBtn');
-    cta.innerText = '⬇️ Yuklab olish';
-    cta.className = 'cta-btn';
-    cta.disabled  = false;
+    cta.innerText        = '⬇️ Yuklab olish';
+    cta.disabled         = false;
     cta.style.background = '';
 
     document.getElementById('sheetBackdrop').classList.add('open');
@@ -1039,58 +1257,41 @@ function closeSheet() {
     currentMod = null;
 }
 
+// ── Download ─────────────────────────────────────────
 async function downloadCurrent() {
     if (!currentMod) return;
-
-    const btn = document.getElementById('sheetCtaBtn');
+    const btn    = document.getElementById('sheetCtaBtn');
     const userId = getTelegramUserId();
 
-    console.log('[Download] userId:', userId, '| modId:', currentMod.id);
-
-    // Agar userId topilmasa va tg.sendData mavjud bo'lsa -> sendData orqali yuboramiz
     if (!userId) {
         if (window.Telegram?.WebApp?.sendData) {
             btn.innerText = '⏳ Botga yuborilmoqda...';
-            btn.disabled = true;
+            btn.disabled  = true;
             tg.HapticFeedback?.notificationOccurred?.('success');
-            tg.sendData(JSON.stringify({
-                action: 'download_mod',
-                mod_id: currentMod.id,
-            }));
-            setTimeout(() => {
-                closeSheet();
-                tg.close();
-            }, 1200);
+            tg.sendData(JSON.stringify({ action: 'download_mod', mod_id: currentMod.id }));
+            setTimeout(() => { closeSheet(); tg.close(); }, 1200);
             return;
         }
-
         btn.innerText = '⚠️ Telegram botdan oching';
         setTimeout(() => { btn.innerText = '⬇️ Yuklab olish'; btn.disabled = false; }, 2500);
         return;
     }
 
-    // Tugmani yuklash holatiga o'tkazamiz — Mini App YOPILMAYDI
     btn.innerText = '⏳ Yuborilmoqda...';
     btn.disabled  = true;
 
-    // 1-USUL: Vercel serverless /api/download (eng tez, 100% ishonchli, ngrok shart emas)
+    // 1. Vercel serverless
     try {
-        const res = await fetch('/api/download', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                mod_id:  currentMod.id,
-                user_id: userId,
-            }),
+        const res  = await fetch('/api/download', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ mod_id: currentMod.id, user_id: userId }),
         });
         const data = await res.json();
         if (data.ok) {
-            btn.innerText = '✅ Yuborildi! Chat-ni oching';
-            btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+            btn.innerText        = '✅ Yuborildi! Chat-ni oching';
+            btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
             tg.HapticFeedback?.notificationOccurred?.('success');
-
             setTimeout(() => {
                 btn.innerText = '⬇️ Yuklab olish';
                 btn.disabled  = false;
@@ -1099,7 +1300,7 @@ async function downloadCurrent() {
             }, 3000);
             return;
         } else if (data.error === 'demo') {
-            btn.innerText = '🚧 Tez orada qo\'shiladi!';
+            btn.innerText        = '🚧 Tez orada qo\'shiladi!';
             btn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
             setTimeout(() => {
                 btn.innerText = '⬇️ Yuklab olish';
@@ -1108,30 +1309,21 @@ async function downloadCurrent() {
             }, 2500);
             return;
         }
-    } catch (e) {
-        console.warn('Vercel /api/download failed, trying local ngrok fallback...', e);
-    }
+    } catch (e) {}
 
-    // 2-USUL: ngrok API orqali urinish
+    // 2. ngrok fallback
     if (typeof API_URL !== 'undefined' && API_URL) {
         try {
-            const res = await fetch(`${API_URL}/api/download`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type':              'application/json',
-                    'ngrok-skip-browser-warning': 'true',
-                },
-                body: JSON.stringify({
-                    mod_id:  currentMod.id,
-                    user_id: userId,
-                }),
+            const res  = await fetch(`${API_URL}/api/download`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+                body:    JSON.stringify({ mod_id: currentMod.id, user_id: userId }),
             });
             const data = await res.json();
             if (data.ok) {
-                btn.innerText = '✅ Yuborildi! Chat-ni oching';
-                btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+                btn.innerText        = '✅ Yuborildi! Chat-ni oching';
+                btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
                 tg.HapticFeedback?.notificationOccurred?.('success');
-
                 setTimeout(() => {
                     btn.innerText = '⬇️ Yuklab olish';
                     btn.disabled  = false;
@@ -1140,26 +1332,18 @@ async function downloadCurrent() {
                 }, 3000);
                 return;
             }
-        } catch (e) {
-            console.warn('ngrok download failed, trying sendData fallback...', e);
-        }
+        } catch (e) {}
     }
 
-    // 3-USUL: oxirgi zaxira usuli — tg.sendData (aniq ishlaydi)
+    // 3. sendData fallback
     if (window.Telegram?.WebApp?.sendData) {
         btn.innerText = '⏳ Botga yuborilmoqda...';
-        tg.sendData(JSON.stringify({
-            action: 'download_mod',
-            mod_id: currentMod.id,
-        }));
-        setTimeout(() => {
-            closeSheet();
-            tg.close();
-        }, 1200);
+        tg.sendData(JSON.stringify({ action: 'download_mod', mod_id: currentMod.id }));
+        setTimeout(() => { closeSheet(); tg.close(); }, 1200);
         return;
     }
 
-    btn.innerText = '❌ Xatolik — qayta urinib ko\'ring';
+    btn.innerText        = '❌ Xatolik — qayta urinib ko\'ring';
     btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
     setTimeout(() => {
         btn.innerText = '⬇️ Yuklab olish';
@@ -1168,21 +1352,19 @@ async function downloadCurrent() {
     }, 2500);
 }
 
-// ── My Orders ─────────────────────────────────────────────
+// ── My Orders & AI ────────────────────────────────────
 function openMyOrders() {
     tg.sendData(JSON.stringify({ action: 'get_orders' }));
     tg.HapticFeedback.impactOccurred('light');
     tg.close();
 }
-
-// ── AI Chat ───────────────────────────────────────────────
 function openAIChat() {
     tg.sendData(JSON.stringify({ action: 'open_ai' }));
     tg.HapticFeedback.impactOccurred('medium');
     tg.close();
 }
 
-// ── Init ──────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────
 loadCatalog();
 </script>
 </body>
