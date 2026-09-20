@@ -51,7 +51,7 @@
 
     /* ── APP SHELL ─────────────────────────────────── */
     .app {
-        max-width: 480px;
+        max-width: 100%;
         margin: 0 auto;
         height: 100vh;
         display: flex;
@@ -263,7 +263,7 @@
     }
     .grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 12px;
     }
 
@@ -538,7 +538,7 @@
     .nav-wrap {
         position:fixed; bottom:0;
         left:50%; transform:translateX(-50%);
-        width:100%; max-width:480px;
+        width:100%; max-width:100%;
         z-index:60; pointer-events:none;
     }
     .nav {
@@ -599,12 +599,37 @@
 
     /* ── EMPTY STATE ─────────────────────────────────── */
     .empty {
-        grid-column:span 2;
+        grid-column: 1 / -1;
         text-align:center; padding:60px 20px;
         color:var(--gray);
     }
     .empty-icon { font-size:48px; margin-bottom:12px; }
     .empty-text { font-size:15px; font-weight:600; }
+
+    /* ── DESKTOP RESPONSIVE TWEAKS ──────────────────── */
+    @media (min-width: 700px) {
+        .grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; padding: 0 30px 90px; }
+        .card-img-wrap { height: 180px; }
+        .hdr { padding: 24px 30px 16px; }
+        .search-row { padding: 0 30px 16px; }
+        .banner-wrap { padding: 0 30px 20px; }
+        .banner { min-height: 180px; padding: 30px 40px; border-radius: 24px; }
+        .banner-title { font-size: 32px; margin-bottom: 20px; }
+        .banner-right { font-size: 100px; }
+        .sec-head { padding: 0 30px 16px; }
+        .chips { padding: 0 30px 24px; gap: 12px; }
+        .chip { padding: 12px 24px; font-size: 15px; }
+        
+        #page-categories > div:nth-of-type(1) { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+        #page-categories h2 { padding: 0 10px; }
+        
+        #page-orders > div, #page-profile > div { max-width: 600px; margin-left: auto; margin-right: auto; }
+        
+        .nav { justify-content: center; gap: 60px; padding-bottom: 20px; border-radius: 30px 30px 0 0; margin: 0 auto; max-width: 800px; border: 1.5px solid var(--border); border-bottom: none; }
+        .sheet { max-width: 600px; border-radius: 32px 32px 0 0; }
+        .sheet-img-wrap { height: 260px; margin: 16px 24px 0; }
+        .sheet-body { padding: 24px 24px 40px; }
+    }
     </style>
 </head>
 <body>
