@@ -620,11 +620,11 @@
                 <div class="hdr-title">BeamMods</div>
             </div>
             <div class="hdr-right">
-                <div class="hdr-icon" onclick="openMyOrders()">
+                <div class="hdr-icon" onclick="switchNav('orders', document.querySelectorAll('.nav-btn')[3])">
                     🛒
                     <span class="notif-dot"></span>
                 </div>
-                <div class="avatar" onclick="openAIChat()">AI</div>
+                <div class="avatar" onclick="switchNav('profile', document.querySelectorAll('.nav-btn')[4])">AI</div>
             </div>
         </header>
 
@@ -683,6 +683,41 @@
         <div class="short-dots" id="shortDots"></div>
     </div>
 
+    <!-- ══ ORDERS PAGE ════════════════════════════════ -->
+    <div class="page" id="page-orders" style="background:var(--bg); padding:20px; overflow-y:auto; padding-bottom:120px;">
+        <h2 style="margin-bottom:20px; color:var(--dark); font-weight:800; letter-spacing:-0.5px; font-size:24px;">Buyurtmalar</h2>
+        <div style="background:var(--white); padding:40px 20px; border-radius:24px; text-align:center; box-shadow:var(--shadow-sm); border:1.5px solid var(--border);">
+            <div style="font-size:48px; margin-bottom:16px;">🛒</div>
+            <div style="font-weight:800; font-size:18px; margin-bottom:8px; color:var(--dark);">Buyurtmalar yo'q</div>
+            <div style="color:var(--gray); font-size:14px; margin-bottom:24px; line-height:1.5;">Siz hali hech qanday mod yuklab olmadingiz.<br>Katalogdan o'zingizga yoqqanini tanlang!</div>
+            <button onclick="switchNav('catalog', document.querySelectorAll('.nav-btn')[0])" style="background:var(--orange); color:#fff; border:none; padding:14px 28px; border-radius:16px; font-weight:700; cursor:pointer; font-size:15px; font-family:inherit; box-shadow:var(--shadow-btn); transition:transform .15s;" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">Katalogga qaytish</button>
+        </div>
+    </div>
+
+    <!-- ══ PROFILE PAGE ═══════════════════════════════ -->
+    <div class="page" id="page-profile" style="background:var(--bg); padding:20px; overflow-y:auto; padding-bottom:120px;">
+        <h2 style="margin-bottom:20px; color:var(--dark); font-weight:800; letter-spacing:-0.5px; font-size:24px;">Profil</h2>
+        
+        <div style="background:var(--white); padding:24px; border-radius:24px; text-align:center; box-shadow:var(--shadow-sm); margin-bottom:20px; border:1.5px solid var(--border);">
+            <div style="width:80px; height:80px; background:linear-gradient(135deg, var(--orange), #FF8C5A); border-radius:24px; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; font-size:32px; color:#fff; font-weight:800; box-shadow:0 8px 24px rgba(255,107,53,0.3);">👤</div>
+            <div style="font-weight:800; font-size:20px; color:var(--dark); margin-bottom:6px;" id="profileIdLabel">Foydalanuvchi</div>
+            <div style="color:var(--orange); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:1px; padding:6px 12px; background:var(--orange-lt); border-radius:10px; display:inline-block;">Pro Obuna</div>
+        </div>
+        
+        <div style="background:var(--white); border-radius:24px; overflow:hidden; box-shadow:var(--shadow-sm); border:1.5px solid var(--border);">
+            <div onclick="openAIChat()" style="padding:18px 20px; display:flex; align-items:center; gap:14px; border-bottom:1.5px solid var(--border); cursor:pointer;">
+                <span style="font-size:22px;">🤖</span>
+                <span style="flex:1; font-weight:700; font-size:16px; color:var(--dark);">AI Yordamchi</span>
+                <span style="color:var(--gray); font-size:18px;">→</span>
+            </div>
+            <div onclick="tg.close()" style="padding:18px 20px; display:flex; align-items:center; gap:14px; cursor:pointer;">
+                <span style="font-size:22px;">⚙️</span>
+                <span style="flex:1; font-weight:700; font-size:16px; color:var(--dark);">Bot sozlamalari</span>
+                <span style="color:var(--gray); font-size:18px;">→</span>
+            </div>
+        </div>
+    </div>
+
 </div><!-- .app -->
 
 <!-- ══ BOTTOM NAV ═══════════════════════════════════ -->
@@ -697,11 +732,11 @@
             <span class="nl">Shorts</span>
         </div>
         <div class="nav-center" onclick="switchNav('shorts',document.querySelectorAll('.nav-btn')[1])">▶️</div>
-        <div class="nav-btn" onclick="openMyOrders()">
+        <div class="nav-btn" onclick="switchNav('orders',this)">
             <span class="ni">🛒</span>
             <span class="nl">Orders</span>
         </div>
-        <div class="nav-btn" onclick="openAIChat()">
+        <div class="nav-btn" onclick="switchNav('profile',this)">
             <span class="ni">👤</span>
             <span class="nl">Profile</span>
         </div>
@@ -1076,8 +1111,15 @@ async function downloadCurrent() {
 }
 
 // ── Orders & AI ────────────────────────────────────────
-function openMyOrders() { tg.sendData(JSON.stringify({ action:'get_orders' })); tg.HapticFeedback.impactOccurred('light'); tg.close(); }
-function openAIChat()    { tg.sendData(JSON.stringify({ action:'open_ai' }));   tg.HapticFeedback.impactOccurred('medium'); tg.close(); }
+function openAIChat() { tg.sendData(JSON.stringify({ action:'open_ai' })); tg.HapticFeedback.impactOccurred('medium'); tg.close(); }
+
+setTimeout(() => {
+    const id = getTelegramUserId();
+    if (id) {
+        const el = document.getElementById('profileIdLabel');
+        if (el) el.textContent = 'ID: ' + id;
+    }
+}, 500);
 
 // ── Init ───────────────────────────────────────────────
 loadCatalog();
