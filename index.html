@@ -683,6 +683,49 @@
         <div class="short-dots" id="shortDots"></div>
     </div>
 
+    <!-- ══ CATEGORIES PAGE ════════════════════════════ -->
+    <div class="page" id="page-categories" style="background:var(--bg); padding:20px; overflow-y:auto; padding-bottom:120px;">
+        <h2 style="margin-bottom:20px; color:var(--dark); font-weight:800; letter-spacing:-0.5px; font-size:24px;">Kategoriyalar</h2>
+        
+        <div style="display:grid; grid-template-columns:1fr; gap:14px;">
+            <div onclick="selectCategoryFromPage('cars')" style="background:var(--white); border-radius:20px; padding:20px; display:flex; align-items:center; gap:16px; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .15s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                <div style="width:60px; height:60px; background:var(--orange-lt); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px;">🚗</div>
+                <div style="flex:1;">
+                    <div style="font-weight:800; font-size:17px; color:var(--dark); margin-bottom:4px;">Avtomobillar</div>
+                    <div style="color:var(--gray); font-size:13px; line-height:1.4;">Eng mashhur va premium mashina modlari</div>
+                </div>
+                <div style="color:var(--gray2); font-size:20px;">→</div>
+            </div>
+
+            <div onclick="selectCategoryFromPage('trucks')" style="background:var(--white); border-radius:20px; padding:20px; display:flex; align-items:center; gap:16px; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .15s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                <div style="width:60px; height:60px; background:var(--orange-lt); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px;">🚛</div>
+                <div style="flex:1;">
+                    <div style="font-weight:800; font-size:17px; color:var(--dark); margin-bottom:4px;">Yuk mashinalari</div>
+                    <div style="color:var(--gray); font-size:13px; line-height:1.4;">Og'ir texnikalar, avtobuslar va tirkamalar</div>
+                </div>
+                <div style="color:var(--gray2); font-size:20px;">→</div>
+            </div>
+
+            <div onclick="selectCategoryFromPage('maps')" style="background:var(--white); border-radius:20px; padding:20px; display:flex; align-items:center; gap:16px; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .15s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                <div style="width:60px; height:60px; background:var(--orange-lt); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px;">🗺️</div>
+                <div style="flex:1;">
+                    <div style="font-weight:800; font-size:17px; color:var(--dark); margin-bottom:4px;">Xaritalar (Maps)</div>
+                    <div style="color:var(--gray); font-size:13px; line-height:1.4;">Katta ochiq dunyo va poyga trassalari</div>
+                </div>
+                <div style="color:var(--gray2); font-size:20px;">→</div>
+            </div>
+
+            <div onclick="selectCategoryFromPage('3d_models')" style="background:var(--white); border-radius:20px; padding:20px; display:flex; align-items:center; gap:16px; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .15s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                <div style="width:60px; height:60px; background:var(--orange-lt); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px;">🎨</div>
+                <div style="flex:1;">
+                    <div style="font-weight:800; font-size:17px; color:var(--dark); margin-bottom:4px;">3D Modellar</div>
+                    <div style="color:var(--gray); font-size:13px; line-height:1.4;">Ehtiyot qismlar, tuning va boshqalar</div>
+                </div>
+                <div style="color:var(--gray2); font-size:20px;">→</div>
+            </div>
+        </div>
+    </div>
+
     <!-- ══ ORDERS PAGE ════════════════════════════════ -->
     <div class="page" id="page-orders" style="background:var(--bg); padding:20px; overflow-y:auto; padding-bottom:120px;">
         <h2 style="margin-bottom:20px; color:var(--dark); font-weight:800; letter-spacing:-0.5px; font-size:24px;">Buyurtmalar</h2>
@@ -727,11 +770,11 @@
             <span class="ni">🏠</span>
             <span class="nl">Home</span>
         </div>
-        <div class="nav-btn" onclick="switchNav('shorts',this)">
-            <span class="ni">📱</span>
-            <span class="nl">Shorts</span>
+        <div class="nav-btn" onclick="switchNav('categories',this)">
+            <span class="ni">🗂️</span>
+            <span class="nl">Katalog</span>
         </div>
-        <div class="nav-center" onclick="switchNav('shorts',document.querySelectorAll('.nav-btn')[1])">▶️</div>
+        <div class="nav-center" onclick="switchNav('shorts', null)">▶️</div>
         <div class="nav-btn" onclick="switchNav('orders',this)">
             <span class="ni">🛒</span>
             <span class="nl">Orders</span>
@@ -1120,6 +1163,19 @@ setTimeout(() => {
         if (el) el.textContent = 'ID: ' + id;
     }
 }, 500);
+
+// ── Categories ─────────────────────────────────────────
+function selectCategoryFromPage(catId) {
+    const chips = document.querySelectorAll('.chip');
+    let targetChip = chips[0];
+    if(catId === 'cars') targetChip = chips[1];
+    if(catId === 'trucks') targetChip = chips[2];
+    if(catId === 'maps') targetChip = chips[3];
+    if(catId === '3d_models') targetChip = chips[4];
+    
+    filterCatalog(catId, targetChip);
+    switchNav('catalog', document.querySelectorAll('.nav-btn')[0]);
+}
 
 // ── Init ───────────────────────────────────────────────
 loadCatalog();
