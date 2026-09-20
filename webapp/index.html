@@ -815,9 +815,11 @@
 <div class="backdrop" id="backdrop" onclick="closeSheet()"></div>
 <div class="sheet" id="modSheet">
     <div class="sheet-pull" onclick="closeSheet()"><span class="sheet-pull-bar"></span></div>
-    <div class="sheet-img-wrap">
+    <div class="sheet-img-wrap" style="position:relative;">
         <img id="sheetImg" class="sheet-img" src="" alt=""
              onerror="this.src='https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600'">
+        <input type="file" id="modImageUpload" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
+        <div id="adminEditImgBtn" onclick="document.getElementById('modImageUpload').click()" style="display:none; position:absolute; top:12px; right:12px; width:38px; height:38px; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); border-radius:12px; color:#fff; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.25); z-index:10;">✏️</div>
     </div>
     <div class="sheet-body">
         <div class="sheet-cat-row">
@@ -1101,6 +1103,15 @@ function openSheet(modId) {
     document.getElementById('sheetCat').innerText   = mod.category.toUpperCase();
     document.getElementById('sheetDesc').innerText  = mod.description || '—';
     document.getElementById('sheetDl').innerText    = (mod.downloads || 0) + '+';
+    
+    // Admin image edit
+    const adminBtn = document.getElementById('adminEditImgBtn');
+    if (getTelegramUserId() === 7022141893) {
+        adminBtn.style.display = 'flex';
+    } else {
+        adminBtn.style.display = 'none';
+    }
+
     const btn = document.getElementById('sheetCtaBtn');
     btn.textContent = '⬇️ Yuklab olish';
     btn.disabled = false; btn.style.background = '';
@@ -1108,6 +1119,52 @@ function openSheet(modId) {
     document.getElementById('modSheet').classList.add('open');
     tg.HapticFeedback.impactOccurred('medium');
 }
+// ── Admin Image Upload ─────────────────────────────────
+async function handleImageSelect(event) {
+    const file = event.target.files[0];
+    if (!file || !currentMod) return;
+
+    const btn = document.getElementById('adminEditImgBtn');
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '⏳';
+    
+    try {
+        const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = e => reject(e);
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('sheetImg').src = base64; // Preview instantly
+        
+        const uid = getTelegramUserId();
+        // Send to backend (Ngrok works via API_URL, or relative if on same origin)
+        const targetUrl = API_URL ? `${API_URL}/api/upload_image` : `/api/upload_image`;
+        const res = await fetch(targetUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+            body: JSON.stringify({ mod_id: currentMod.id, user_id: uid, image_base64: base64 })
+        });
+        
+        const data = await res.json();
+        if (data.ok) {
+            tg.HapticFeedback?.notificationOccurred?.('success');
+            currentMod.thumbnail = base64;
+            const cardImg = document.querySelector(`.card[onclick*="openSheet(${currentMod.id})"] img`);
+            if (cardImg) cardImg.src = base64;
+            alert('Rasm muvaffaqiyatli yangilandi!');
+        } else {
+            alert('Xatolik: ' + data.error);
+        }
+    } catch(e) {
+        alert('Server bilan aloqa yo\'q yoki xatolik: ' + e.message);
+    }
+    
+    btn.innerHTML = oldHtml;
+    event.target.value = '';
+}
+
 function closeSheet() {
     document.getElementById('backdrop').classList.remove('open');
     document.getElementById('modSheet').classList.remove('open');
