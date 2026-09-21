@@ -515,18 +515,17 @@ async def cmd_deletemod(message: types.Message):
     else:
         await message.answer(f"Mod #{parts[1]} topilmadi.")
 
-# ── WebApp orqali rasmni o'zgartirish (Xeshteg orqali) ──
-@router.message(F.photo, F.caption.startswith("#editmod_"), F.from_user.id == ADMIN_ID)
-async def admin_edit_image_hashtag(message: types.Message):
-    try:
-        mod_id_str = message.caption.split("_")[1].strip()
-        mod_id = int(mod_id_str)
-    except (IndexError, ValueError):
-        await message.answer("Noto'g'ri format! Izohda #editmod_ID bo'lishi kerak.")
+# ── WebApp orqali rasm yuklangandan keyin saqlash (Callback) ──
+@router.callback_query(F.data.startswith("applyimg_"), F.from_user.id == ADMIN_ID)
+async def apply_image_edit(callback: types.CallbackQuery):
+    mod_id = int(callback.data.split("_")[1])
+    
+    if not callback.message.photo:
+        await callback.answer("Xatolik: Xabarda rasm yo'q!", show_alert=True)
         return
 
-    # Telegram o'zida turgan rasmni file_id sini olamiz
-    file_id = message.photo[-1].file_id
+    # O'sha xabardagi rasmni file_id sini olamiz
+    file_id = callback.message.photo[-1].file_id
     image_url = f"tg_photo:{file_id}"
 
     # Bazani yangilash
@@ -539,4 +538,8 @@ async def admin_edit_image_hashtag(message: types.Message):
     # Vercel va GitHubga sinxronizatsiya
     await sync_mods_to_github()
     
-    await message.answer(f"✅ Mod (ID: {mod_id}) rasmi muvaffaqiyatli o'zgartirildi va katalog yangilandi!")
+    await callback.message.edit_caption(
+        caption=f"✅ Mod (ID: {mod_id}) rasmi muvaffaqiyatli saqlandi va katalog yangilandi!",
+        reply_markup=None
+    )
+    await callback.answer("Saqlandi!")

@@ -121,26 +121,61 @@ class handler(BaseHTTPRequestHandler):
             except Exception:
                 pass
 
-        # 🔹 /api/request_edit 🔹 Rasm o'zgartirishni so'rash
-        if '/api/request_edit' in path:
-            mod_id = body.get('mod_id')
-            user_id = body.get('user_id')
-            mod_name = body.get('mod_name')
-            
-            text = (
-                f"🖼 <b>{mod_name}</b> modining rasmini o'zgartirish uchun yangi rasmni yuboring.\n\n"
-                f"⚠️ <b>Muhim:</b> Rasmni yuborayotganda izoh (caption) qismiga aynan quyidagi kodni yozing:\n\n"
-                f"<code>#editmod_{mod_id}</code>"
-            )
+        # 🔹 /api/upload_to_telegram 🔹 Rasm yuklash va botga tasdiqlash uchun yuborish
+        if '/api/upload_to_telegram' in path:
             try:
-                payload = urllib.parse.urlencode({
-                    'chat_id': user_id,
-                    'text': text,
-                    'parse_mode': 'HTML'
-                }).encode('utf-8')
-                req = urllib.request.Request(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data=payload)
-                urllib.request.urlopen(req, timeout=10)
-                self.wfile.write(json.dumps({"ok": True}).encode('utf-8'))
+                mod_id = body.get('mod_id')
+                user_id = body.get('user_id')
+                mod_name = body.get('mod_name', 'Mod')
+                base64_img = body.get('image_base64', '')
+                
+                if not base64_img:
+                    self.wfile.write(json.dumps({"ok": False, "error": "Rasm yo'q"}).encode('utf-8'))
+                    return
+                
+                # Base64 ni ikkilik (binary) formatga o'tkazish
+                import base64
+                if ',' in base64_img:
+                    base64_img = base64_img.split(',')[1]
+                image_bytes = base64.b64decode(base64_img)
+
+                # Multipart form-data yig'ish
+                boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
+                parts = []
+                
+                # chat_id
+                parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\n{user_id}\r\n".encode('utf-8'))
+                
+                # caption
+                caption = f"🖼 <b>{mod_name}</b> modining yangi rasmi.\n\nBazaga saqlash uchun pastdagi tugmani bosing."
+                parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"caption\"\r\n\r\n{caption}\r\n".encode('utf-8'))
+                
+                # parse_mode
+                parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nHTML\r\n".encode('utf-8'))
+                
+                # reply_markup
+                markup = json.dumps({'inline_keyboard': [[{'text': '✅ Tasdiqlash va Saqlash', 'callback_data': f'applyimg_{mod_id}'}]]})
+                parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"reply_markup\"\r\n\r\n{markup}\r\n".encode('utf-8'))
+                
+                # photo file
+                parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"photo\"; filename=\"image.jpg\"\r\nContent-Type: image/jpeg\r\n\r\n".encode('utf-8'))
+                parts.append(image_bytes)
+                parts.append(f"\r\n--{boundary}--\r\n".encode('utf-8'))
+                
+                body_bytes = b"".join(parts)
+                
+                req = urllib.request.Request(
+                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto", 
+                    data=body_bytes, 
+                    headers={'Content-Type': f'multipart/form-data; boundary={boundary}'}
+                )
+                
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    resp_json = json.loads(resp.read().decode('utf-8'))
+                    if resp_json.get("ok"):
+                        self.wfile.write(json.dumps({"ok": True}).encode('utf-8'))
+                    else:
+                        self.wfile.write(json.dumps({"ok": False, "error": resp_json.get("description")}).encode('utf-8'))
             except Exception as e:
                 self.wfile.write(json.dumps({"ok": False, "error": str(e)}).encode('utf-8'))
             return
