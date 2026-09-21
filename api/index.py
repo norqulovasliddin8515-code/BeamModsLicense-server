@@ -140,7 +140,8 @@ class handler(BaseHTTPRequestHandler):
                     data=payload,
                     headers={
                         'Content-Type': 'application/json',
-                        'ngrok-skip-browser-warning': 'true'
+                        'ngrok-skip-browser-warning': 'true',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
                     }
                 )
                 with urllib.request.urlopen(req, timeout=30) as resp:

@@ -202,7 +202,10 @@ def build_web_app(bot: Bot) -> web.Application:
     aiohttp Application ni yaratadi, routerlarni qo'shadi va
     CORS middleware ni ulaydi.
     """
-    app = web.Application(middlewares=[cors_middleware])
+    app = web.Application(
+        middlewares=[cors_middleware],
+        client_max_size=1024 * 1024 * 20  # 20 MB limit
+    )
 
     # ── API Endpointlar ────────────────────────────────────────
     app.router.add_get("/health",         api_health)
@@ -213,6 +216,7 @@ def build_web_app(bot: Bot) -> web.Application:
     app.router.add_options("/api/mods",         lambda r: web.Response(status=204))
     app.router.add_options("/api/mods/{id}",    lambda r: web.Response(status=204))
     app.router.add_options("/api/download",     lambda r: web.Response(status=204))
+    app.router.add_options("/api/upload_image", lambda r: web.Response(status=204))
 
     # ── Download Endpoint ──────────────────────────────────────
     # Mini App yopilmasin uchun sendData() o'rniga bu endpoint ishlatiladi.
@@ -312,6 +316,53 @@ def build_web_app(bot: Bot) -> web.Application:
             return web.Response(status=500, text=str(e))
 
     app.router.add_get("/api/photo/{file_id}", api_photo)
+
+    # 🔹 Image Upload (Admin panel - WebApp) 🔹
+    async def api_upload_image(request: web.Request) -> web.Response:
+        import base64
+        import json
+        from aiogram.types import BufferedInputFile
+        from bot.config import ADMIN_ID, ARCHIVE_GROUP_ID, DB_PATH
+        from bot.handlers.admin import sync_mods_to_github
+        import aiosqlite
+
+        try:
+            body = await request.json()
+            mod_id = int(body.get("mod_id", 0))
+            user_id = int(body.get("user_id", 0))
+            base64_img = body.get("image_base64", "")
+        except Exception:
+            return web.Response(text=json.dumps({"ok": False, "error": "Invalid JSON"}), content_type="application/json", status=400)
+
+        if user_id != ADMIN_ID:
+            return web.Response(text=json.dumps({"ok": False, "error": "Faqat admin o'zgartira oladi!"}), content_type="application/json", status=403)
+        if not mod_id or not base64_img:
+            return web.Response(text=json.dumps({"ok": False, "error": "mod_id va image_base64 kerak"}), content_type="application/json", status=400)
+
+        try:
+            header, encoded = base64_img.split(",", 1) if "," in base64_img else ("", base64_img)
+            img_data = base64.b64decode(encoded)
+
+            msg = await bot.send_photo(
+                chat_id=ARCHIVE_GROUP_ID,
+                photo=BufferedInputFile(img_data, filename="mod_cover.jpg"),
+                caption=f"📝 Mod ID: {mod_id} rasmi WebApp orqali yangilandi."
+            )
+            file_id = msg.photo[-1].file_id
+            image_url = f"tg_photo:{file_id}"
+
+            async with aiosqlite.connect(DB_PATH) as db_conn:
+                await db_conn.execute("UPDATE mods SET image_url=? WHERE id=?", (image_url, mod_id))
+                await db_conn.commit()
+
+            asyncio.create_task(sync_mods_to_github())
+
+            return web.Response(text=json.dumps({"ok": True, "file_id": file_id}), content_type="application/json")
+        except Exception as e:
+            logger.error(f"[UploadImage] Error: {e}")
+            return web.Response(text=json.dumps({"ok": False, "error": str(e)}), content_type="application/json", status=500)
+
+    app.router.add_post("/api/upload_image", api_upload_image)
 
     # ── To'lov Webhooklar ──────────────────────────────────────
     async def click_prepare(r):  return await pay_handler.click_prepare(r)

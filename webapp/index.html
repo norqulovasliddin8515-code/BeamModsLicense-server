@@ -1136,7 +1136,7 @@ async function handleImageSelect(event) {
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let w = img.width, h = img.height;
-                    const MAX = 1000;
+                    const MAX = 600;
                     if (w > MAX || h > MAX) {
                         if (w > h) { h *= MAX / w; w = MAX; }
                         else { w *= MAX / h; h = MAX; }
@@ -1144,7 +1144,7 @@ async function handleImageSelect(event) {
                     canvas.width = w; canvas.height = h;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.85)); // compress
+                    resolve(canvas.toDataURL('image/jpeg', 0.7)); // compress deeply
                 };
                 img.onerror = () => reject('Rasm formatida xato');
                 img.src = e.target.result;
