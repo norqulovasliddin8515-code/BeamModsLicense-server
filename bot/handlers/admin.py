@@ -530,7 +530,7 @@ async def admin_edit_image_photo(message: types.Message, state: FSMContext):
 
     # Bazani yangilash
     import aiosqlite
-    from bot.config import DB_PATH
+    from bot.database import DB_PATH
     async with aiosqlite.connect(DB_PATH) as db_conn:
         await db_conn.execute("UPDATE mods SET image_url=? WHERE id=?", (image_url, mod_id))
         await db_conn.commit()

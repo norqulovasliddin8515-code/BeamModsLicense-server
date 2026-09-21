@@ -322,7 +322,8 @@ def build_web_app(bot: Bot) -> web.Application:
         import base64
         import json
         from aiogram.types import BufferedInputFile
-        from bot.config import ADMIN_ID, ARCHIVE_GROUP_ID, DB_PATH
+        from bot.config import ADMIN_ID, ARCHIVE_GROUP_ID
+        from bot.database import DB_PATH
         from bot.handlers.admin import sync_mods_to_github
         import aiosqlite
 
