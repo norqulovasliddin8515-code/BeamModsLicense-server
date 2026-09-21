@@ -121,34 +121,28 @@ class handler(BaseHTTPRequestHandler):
             except Exception:
                 pass
 
-        # 🔹 /api/upload_proxy 🔹 CORS muammosini chetlab o'tish uchun Vercel proxy
-        if '/api/upload_proxy' in path:
+        # 🔹 /api/request_edit 🔹 Rasm o'zgartirishni so'rash
+        if '/api/request_edit' in path:
+            mod_id = body.get('mod_id')
+            user_id = body.get('user_id')
+            mod_name = body.get('mod_name')
+            
+            text = (
+                f"🖼 <b>{mod_name}</b> modining rasmini o'zgartirish uchun yangi rasmni yuboring.\n\n"
+                f"⚠️ <b>Muhim:</b> Rasmni yuborayotganda izoh (caption) qismiga aynan quyidagi kodni yozing:\n\n"
+                f"<code>#editmod_{mod_id}</code>"
+            )
             try:
-                ngrok_url = body.get('ngrok_url', '')
-                if not ngrok_url:
-                    self.wfile.write(json.dumps({"ok": False, "error": "ngrok_url kerak"}).encode('utf-8'))
-                    return
-
-                payload = json.dumps({
-                    "mod_id": body.get('mod_id'),
-                    "user_id": body.get('user_id'),
-                    "image_base64": body.get('image_base64')
+                payload = urllib.parse.urlencode({
+                    'chat_id': user_id,
+                    'text': text,
+                    'parse_mode': 'HTML'
                 }).encode('utf-8')
-
-                req = urllib.request.Request(
-                    f"{ngrok_url.rstrip('/')}/api/upload_image",
-                    data=payload,
-                    headers={
-                        'Content-Type': 'application/json',
-                        'ngrok-skip-browser-warning': 'true',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-                    }
-                )
-                with urllib.request.urlopen(req, timeout=30) as resp:
-                    resp_json = json.loads(resp.read().decode('utf-8'))
-                    self.wfile.write(json.dumps(resp_json).encode('utf-8'))
+                req = urllib.request.Request(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data=payload)
+                urllib.request.urlopen(req, timeout=10)
+                self.wfile.write(json.dumps({"ok": True}).encode('utf-8'))
             except Exception as e:
-                self.wfile.write(json.dumps({"ok": False, "error": f"Proxy error: {str(e)}"}).encode('utf-8'))
+                self.wfile.write(json.dumps({"ok": False, "error": str(e)}).encode('utf-8'))
             return
 
         # ── /api/download — Faylni Telegram DM ga yuborish ──

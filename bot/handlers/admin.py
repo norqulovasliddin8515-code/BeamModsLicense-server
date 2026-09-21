@@ -515,13 +515,14 @@ async def cmd_deletemod(message: types.Message):
     else:
         await message.answer(f"Mod #{parts[1]} topilmadi.")
 
-# ── WebApp orqali rasmni o'zgartirish ──
-@router.message(StateFilter("waiting_for_admin_image"), F.photo, F.from_user.id == ADMIN_ID)
-async def admin_edit_image_photo(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    mod_id = data.get("edit_mod_id")
-    if not mod_id:
-        await state.clear()
+# ── WebApp orqali rasmni o'zgartirish (Xeshteg orqali) ──
+@router.message(F.photo, F.caption.startswith("#editmod_"), F.from_user.id == ADMIN_ID)
+async def admin_edit_image_hashtag(message: types.Message):
+    try:
+        mod_id_str = message.caption.split("_")[1].strip()
+        mod_id = int(mod_id_str)
+    except (IndexError, ValueError):
+        await message.answer("Noto'g'ri format! Izohda #editmod_ID bo'lishi kerak.")
         return
 
     # Telegram o'zida turgan rasmni file_id sini olamiz
@@ -537,15 +538,5 @@ async def admin_edit_image_photo(message: types.Message, state: FSMContext):
 
     # Vercel va GitHubga sinxronizatsiya
     await sync_mods_to_github()
-    await state.clear()
     
-    await message.answer(f"✅ Mod (ID: {mod_id}) rasmi muvaffaqiyatli o'zgartirildi va Vercel'ga sinxronizatsiya qilindi!\n\nMini App'ni qaytadan ochib tekshirishingiz mumkin.")
-
-@router.message(StateFilter("waiting_for_admin_image"), F.from_user.id == ADMIN_ID)
-async def admin_edit_image_invalid(message: types.Message, state: FSMContext):
-    await message.answer("Iltimos, rasm (photo) yuboring yoki bekor qilish uchun /cancel bosing.")
-    
-@router.message(Command("cancel"), StateFilter("waiting_for_admin_image"), F.from_user.id == ADMIN_ID)
-async def admin_edit_image_cancel(message: types.Message, state: FSMContext):
-    await state.clear()
-    await message.answer("Rasm o'zgartirish bekor qilindi.")
+    await message.answer(f"✅ Mod (ID: {mod_id}) rasmi muvaffaqiyatli o'zgartirildi va katalog yangilandi!")

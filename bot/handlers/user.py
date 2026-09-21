@@ -120,16 +120,7 @@ async def handle_web_app_data(message: types.Message, bot, state: FSMContext):
     action  = data.get("action")
     user_id = message.from_user.id
 
-    # ── Admin rasm tahrirlash ────────────────────────────────────────────────
-    if action == "edit_image":
-        if user_id != ADMIN_ID: return
-        mod_id = data.get("mod_id")
-        await state.update_data(edit_mod_id=mod_id)
-        await state.set_state("waiting_for_admin_image")
-        await message.answer(f"🖼 Iltimos, Mod ID: {mod_id} uchun yangi rasmni (photo) shu yerga yuboring.")
-        return
-
-    # ── Yuklab olish — asosiy funksiya ──────────────────────────────────────
+    # ── Yuklab olish — asosiy funksiya ──
     if action == "download_mod":
         mod_id = data.get("mod_id")
         mod    = await db.get_mod_by_id(mod_id)

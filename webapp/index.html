@@ -1118,13 +1118,21 @@ function openSheet(modId) {
     document.getElementById('modSheet').classList.add('open');
     tg.HapticFeedback.impactOccurred('medium');
 }
-// ── Admin Image Upload ─────────────────────────────────
 function triggerImageEdit() {
     if (!currentMod) return;
-    tg.sendData(JSON.stringify({
-        action: 'edit_image',
-        mod_id: currentMod.id
-    }));
+    fetch('/api/request_edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            mod_id: currentMod.id, 
+            user_id: getTelegramUserId(),
+            mod_name: currentMod.name
+        })
+    }).then(() => {
+        tg.close();
+    }).catch(() => {
+        tg.close();
+    });
 }
 
 function closeSheet() {
