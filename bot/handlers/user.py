@@ -96,10 +96,12 @@ async def cmd_my_orders(message: types.Message):
     await message.answer("\n".join(lines), parse_mode="HTML")
 
 
+from aiogram.fsm.context import FSMContext
+
 # ── TWA dan kelgan web_app_data ────────────────────────────────────────────────
 
 @router.message(F.web_app_data)
-async def handle_web_app_data(message: types.Message, bot):
+async def handle_web_app_data(message: types.Message, bot, state: FSMContext):
     """
     Frontend (index.html) dan kelgan JSON ma'lumotni qayta ishlaydi.
 
@@ -107,6 +109,7 @@ async def handle_web_app_data(message: types.Message, bot):
       - download_mod : Faylni to'g'ridan Telegram DM da yuboradi (file_id orqali)
       - get_orders   : Foydalanuvchi yuklab olgan modlar ro'yxati
       - open_ai      : AI maslahatchi ochish
+      - edit_image   : Admin rasm almashtirishi uchun (faqat ADMIN_ID)
     """
     try:
         data = json.loads(message.web_app_data.data)
@@ -116,6 +119,15 @@ async def handle_web_app_data(message: types.Message, bot):
 
     action  = data.get("action")
     user_id = message.from_user.id
+
+    # ── Admin rasm tahrirlash ────────────────────────────────────────────────
+    if action == "edit_image":
+        if user_id != ADMIN_ID: return
+        mod_id = data.get("mod_id")
+        await state.update_data(edit_mod_id=mod_id)
+        await state.set_state("waiting_for_admin_image")
+        await message.answer(f"🖼 Iltimos, Mod ID: {mod_id} uchun yangi rasmni (photo) shu yerga yuboring.")
+        return
 
     # ── Yuklab olish — asosiy funksiya ──────────────────────────────────────
     if action == "download_mod":
