@@ -121,6 +121,35 @@ class handler(BaseHTTPRequestHandler):
             except Exception:
                 pass
 
+        # 🔹 /api/upload_proxy 🔹 CORS muammosini chetlab o'tish uchun Vercel proxy
+        if '/api/upload_proxy' in path:
+            try:
+                ngrok_url = body.get('ngrok_url', '')
+                if not ngrok_url:
+                    self.wfile.write(json.dumps({"ok": False, "error": "ngrok_url kerak"}).encode('utf-8'))
+                    return
+
+                payload = json.dumps({
+                    "mod_id": body.get('mod_id'),
+                    "user_id": body.get('user_id'),
+                    "image_base64": body.get('image_base64')
+                }).encode('utf-8')
+
+                req = urllib.request.Request(
+                    f"{ngrok_url.rstrip('/')}/api/upload_image",
+                    data=payload,
+                    headers={
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                )
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    resp_json = json.loads(resp.read().decode('utf-8'))
+                    self.wfile.write(json.dumps(resp_json).encode('utf-8'))
+            except Exception as e:
+                self.wfile.write(json.dumps({"ok": False, "error": f"Proxy error: {str(e)}"}).encode('utf-8'))
+            return
+
         # ── /api/download — Faylni Telegram DM ga yuborish ──
         if '/download' in path:
             mod_id  = body.get('mod_id')
