@@ -943,7 +943,8 @@ async function loadCatalog() {
             let thumb = m.image_url || m.thumbnail || '';
             if (thumb.startsWith('tg_photo:')) {
                 const pid = thumb.replace('tg_photo:', '');
-                thumb = API_URL ? `${API_URL}/api/photo/${pid}` : `/api/photo/${pid}`;
+                // Har doim Vercel API orqali olamiz (ngrok offline bo'lishi mumkin)
+                thumb = `/api/photo/${pid}?_t=${Date.now()}`;
             }
             return { ...m, youtube_url: m.video_url || '', thumbnail: thumb };
         });

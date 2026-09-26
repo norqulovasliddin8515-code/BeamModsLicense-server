@@ -73,7 +73,7 @@ class handler(BaseHTTPRequestHandler):
                     self.send_response(302)
                     _cors_headers(self)
                     self.send_header('Location', cdn_url)
-                    self.send_header('Cache-Control', 'public, max-age=3600')
+                    self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
                     self.end_headers()
                 else:
                     self.send_response(404)
