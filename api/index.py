@@ -4,7 +4,7 @@ import os
 import urllib.request
 import urllib.parse
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8665911741:AAHg-R9XtJjDVaGxX6H5eG7AB8koA95YH3g")
+BOT_TOKEN = os.getenv("BOT_TOKEN") or "8665911741:AAHg-R9XtJjDVaGxX6H5eG7AB8koA95YH3g"
 
 VERCEL_URL = "https://beam-mods-license-server.vercel.app"
 
