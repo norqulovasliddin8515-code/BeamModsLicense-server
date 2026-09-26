@@ -16,8 +16,21 @@ def _cors_headers(handler_obj):
     handler_obj.send_header('Access-Control-Allow-Headers', 'Content-Type, ngrok-skip-browser-warning')
 
 
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/norqulovasliddin8515-code/BeamModsLicense-server/main/mods.json"
+
 def _load_mods_json():
-    """mods.json faylini o'qish va modlar ro'yxatini qaytarish."""
+    """mods.json ni GitHub raw URL dan har safar yangilab oqish.
+    Bu Vercel redeployment kutmasdan darhol yangi ma'lumot beradi."""
+    try:
+        req = urllib.request.Request(
+            GITHUB_RAW_URL + f"?_t={__import__('time').time()}",
+            headers={"Cache-Control": "no-cache", "Pragma": "no-cache"}
+        )
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            return json.loads(resp.read().decode('utf-8'))
+    except Exception:
+        pass
+    # Fallback: local fayl
     mods_file = os.path.join(os.path.dirname(__file__), '..', 'mods.json')
     if not os.path.exists(mods_file):
         mods_file = os.path.join(os.getcwd(), 'mods.json')
