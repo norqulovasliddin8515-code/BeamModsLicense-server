@@ -100,7 +100,8 @@ class handler(BaseHTTPRequestHandler):
                 self.send_response(500)
                 _cors_headers(self)
                 self.end_headers()
-                self.wfile.write(str(e).encode('utf-8'))
+                err_msg = f"Error: {str(e)} | URL: {api_url}" if 'api_url' in locals() else str(e)
+                self.wfile.write(err_msg.encode('utf-8'))
             return
 
         # ── /api/mods yoki /api/download (GET) — mods.json qaytarish ──
