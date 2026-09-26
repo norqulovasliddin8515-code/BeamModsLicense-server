@@ -1120,65 +1120,73 @@ function openSheet(modId) {
     tg.HapticFeedback.impactOccurred('medium');
 }
 // ── Admin Image Upload ─────────────────────────────────
+const BOT_TOKEN_CLIENT = '8665911741:AAHg-R9XtJjDVaGxX6H5eG7AB8koA95YH3g';
+
 async function handleImageSelect(event) {
     const file = event.target.files[0];
     if (!file || !currentMod) return;
 
     const btn = document.getElementById('adminEditImgBtn');
-    const oldHtml = btn.innerHTML;
     btn.innerHTML = '⏳';
     
     try {
-        const base64 = await new Promise((resolve, reject) => {
+        // 1) Rasmni canvas orqali kichiklashtirish
+        const blob = await new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let w = img.width, h = img.height;
-                    const MAX = 600;
+                    const MAX = 800;
                     if (w > MAX || h > MAX) {
-                        if (w > h) { h *= MAX / w; w = MAX; }
-                        else { w *= MAX / h; h = MAX; }
+                        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+                        else { w = Math.round(w * MAX / h); h = MAX; }
                     }
                     canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    canvas.toBlob(resolve, 'image/jpeg', 0.80);
                 };
-                img.onerror = () => reject('Rasm formatida xato');
+                img.onerror = () => reject(new Error('Rasm formatida xato'));
                 img.src = e.target.result;
             };
-            reader.onerror = e => reject(e);
+            reader.onerror = reject;
             reader.readAsDataURL(file);
         });
 
-        document.getElementById('sheetImg').src = base64; 
+        // Oldindan ko'rsatish (preview)
+        document.getElementById('sheetImg').src = URL.createObjectURL(blob);
+
+        // 2) To'g'ridan-to'g'ri Telegram Bot API ga yuborish (CORS yo'q - Telegram ruxsat beradi)
+        const uid = getTelegramUserId();
+        const markup = JSON.stringify({inline_keyboard:[[{text:'✅ Tasdiqlash va Saqlash', callback_data:`applyimg_${currentMod.id}`}]]});
         
-        const res = await fetch('/api/upload_to_telegram', {
+        const fd = new FormData();
+        fd.append('chat_id', uid);
+        fd.append('photo', blob, 'photo.jpg');
+        fd.append('caption', `🖼 <b>${currentMod.name}</b> uchun yangi rasm.\n\nSaqlash uchun quyidagi tugmani bosing.`);
+        fd.append('parse_mode', 'HTML');
+        fd.append('reply_markup', markup);
+
+        const tgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN_CLIENT}/sendPhoto`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                mod_id: currentMod.id, 
-                user_id: getTelegramUserId(), 
-                mod_name: currentMod.name,
-                image_base64: base64
-            })
+            body: fd
         });
-        
-        const data = await res.json();
-        if (data.ok) {
-            tg.HapticFeedback?.notificationOccurred?.('success');
-            alert("Rasm botga yuborildi! Iltimos, Telegram botga kirib 'Tasdiqlash' tugmasini bosing.");
-            tg.close();
-        } else {
-            alert('Xatolik: ' + data.error);
+        const tgData = await tgRes.json();
+
+        if (!tgData.ok) {
+            throw new Error('Telegram xatosi: ' + tgData.description);
         }
+
+        tg.HapticFeedback?.notificationOccurred?.('success');
+        alert("✅ Rasm botga yuborildi!\n\nBot xabaridagi '✅ Tasdiqlash' tugmasini bosing.");
+        tg.close();
+
     } catch(e) {
-        alert('Server xatosi: ' + e.message);
+        alert('Xatolik: ' + e.message);
+        btn.innerHTML = '✏️';
     }
     
-    btn.innerHTML = oldHtml;
     event.target.value = '';
 }
 
