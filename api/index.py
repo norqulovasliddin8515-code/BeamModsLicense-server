@@ -81,7 +81,10 @@ class handler(BaseHTTPRequestHandler):
 
                 if data.get('ok') and data.get('result', {}).get('file_path'):
                     file_path = data['result']['file_path']
-                    cdn_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+                    # Telegram file_path lari (masalan, photos/file_1.jpg) qayta-qayta ishlatiladi
+                    # Shuning uchun browser keshidan qochish uchun timestamp qo'shamiz
+                    cdn_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}?_t={__import__('time').time()}"
+                    
                     # 302 redirect
                     self.send_response(302)
                     _cors_headers(self)
