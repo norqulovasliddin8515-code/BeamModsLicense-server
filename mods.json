@@ -1,7 +1,19 @@
 {
   "ok": true,
-  "count": 8,
+  "count": 9,
   "mods": [
+    {
+      "id": 10,
+      "name": "Scorpion",
+      "category": "cars",
+      "description": "BeamNG.drive mod: Scorpion",
+      "price": 0,
+      "image_url": "tg_photo:AgACAgIAAyEFAATahYc0AANware8B3yFvfYUWSPVUJ4Ld-gNq-YAAgceaxtYExBI95EBNFHWjNgBAAMCAAN5AAM9BA",
+      "video_url": "",
+      "file_id": "BQACAgIAAyEFAATahYc0AANxare8B_3GdQa8ed8RJaoxo6zAHEkAAtCjAAISdRlIAAEapcBEtWBkPQQ",
+      "downloads": 0,
+      "created_at": "2026-09-26 12:35:22"
+    },
     {
       "id": 9,
       "name": "Hummerpolice",
