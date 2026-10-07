@@ -13,18 +13,19 @@ import sys
 import tempfile
 import time
 
-# ── env + temp DB BEFORE importing project modules ──
-_TMP = tempfile.mkdtemp(prefix="bms_pay_")
+# ── env BEFORE importing project modules ──
 os.environ.update(
     BOT_TOKEN="123:TEST", CLICK_SERVICE_ID="svc1", CLICK_MERCHANT_ID="mer1",
     CLICK_SECRET_KEY="click_secret", PAYME_MERCHANT_ID="pm1", PAYME_SECRET_KEY="payme_key",
     STARS_UZS_RATE="170",
 )
+# Needs a throwaway PostgreSQL: set TEST_DATABASE_URL (same format as DATABASE_URL).
+os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, ROOT)
 
 import bot.database as db
-db.DB_PATH = os.path.join(_TMP, "t.db")
+from bot import db as dbpool
 
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
@@ -50,15 +51,16 @@ class FakeBot:
 def md5(*p): return hashlib.md5("".join(p).encode()).hexdigest()
 
 
+async def _reset_schema():
+    await dbpool.init_pool(os.environ["TEST_DATABASE_URL"])
+    await dbpool.execute("DROP SCHEMA public CASCADE")
+    await dbpool.execute("CREATE SCHEMA public")
+
 async def seed():
+    await _reset_schema()
     await db.init_db()
     await core.init_payment_tables()
-    # a priced mod (id will be whatever; grab first)
-    async with __import__("aiosqlite").connect(db.DB_PATH) as c:
-        await c.execute("INSERT INTO mods(name,category,price,file_id) VALUES ('T','cars',5000,'FILEID')")
-        await c.commit()
-        cur = await c.execute("SELECT id FROM mods ORDER BY id DESC LIMIT 1")
-        return (await cur.fetchone())[0]
+    return await db.add_mod("T", "cars", "d", 5000, "", "", "FILEID")
 
 
 def build_app(bot):
@@ -203,6 +205,7 @@ async def main():
     check("stars price conversion", stars.stars_for_uzs(5000) == 30)  # ceil(5000/170)=30
 
     await client.close()
+    await dbpool.close_pool()
     print(f"\n{PASS} passed, {FAIL} failed")
     sys.exit(1 if FAIL else 0)
 

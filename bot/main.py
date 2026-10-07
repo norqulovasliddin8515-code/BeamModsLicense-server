@@ -41,6 +41,7 @@ from bot.config import (
 )
 from bot.webapp_auth import verify_init_data, InitDataError
 from bot import database as db
+from bot import db as dbpool
 from bot.handlers import admin, user, ai_assistant, subscription, drm_admin
 from bot.config import STARS_UZS_RATE
 from bot.drm.licenses import init_drm_tables
@@ -354,9 +355,7 @@ def build_web_app(bot: Bot) -> web.Application:
         import json
         from aiogram.types import BufferedInputFile
         from bot.config import ADMIN_ID, ARCHIVE_GROUP_ID
-        from bot.database import DB_PATH
         from bot.handlers.admin import sync_mods_to_github
-        import aiosqlite
 
         try:
             body = await request.json()
@@ -388,9 +387,7 @@ def build_web_app(bot: Bot) -> web.Application:
             file_id = msg.photo[-1].file_id
             image_url = f"tg_photo:{file_id}"
 
-            async with aiosqlite.connect(DB_PATH) as db_conn:
-                await db_conn.execute("UPDATE mods SET image_url=? WHERE id=?", (image_url, mod_id))
-                await db_conn.commit()
+            await db.set_mod_image(mod_id, image_url)
 
             asyncio.create_task(sync_mods_to_github())
 
@@ -496,6 +493,7 @@ async def _wait_for_shutdown_signal() -> None:
 
 async def main():
     # 1. Bazani ishga tushirish
+    await dbpool.init_pool()
     await db.init_db()
     await init_drm_tables()
     await pay_core.init_payment_tables()
@@ -560,6 +558,7 @@ async def _run_webhook(bot: Bot, dp: Dispatcher, web_app: web.Application) -> No
     finally:
         logger.info("To'xtatilmoqda...")
         await runner.cleanup()
+        await dbpool.close_pool()
 
 
 async def _run_polling(bot: Bot, dp: Dispatcher, web_app: web.Application) -> None:
@@ -577,6 +576,7 @@ async def _run_polling(bot: Bot, dp: Dispatcher, web_app: web.Application) -> No
     finally:
         await runner.cleanup()
         await bot.session.close()
+        await dbpool.close_pool()
 
 
 if __name__ == "__main__":

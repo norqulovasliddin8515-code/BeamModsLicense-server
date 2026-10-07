@@ -24,6 +24,7 @@ from aiohttp import web
 
 from bot.config import PAYME_SECRET_KEY
 from bot.payments import core
+from bot import db
 
 logger = logging.getLogger(__name__)
 
@@ -169,12 +170,10 @@ async def _create(rpc_id, params):
 
     create_ms = _now_ms()
     await core.set_provider(payment.id, "payme")
-    async with __import__("aiosqlite").connect(core.DB_PATH) as db:
-        await db.execute(
-            "UPDATE payments SET provider_txn_id=?, payme_state=?, payme_create_ms=? WHERE id=?",
-            (txn_id, STATE_CREATED, create_ms, payment.id),
-        )
-        await db.commit()
+    await db.execute(
+        "UPDATE payments SET provider_txn_id=$1, payme_state=$2, payme_create_ms=$3 WHERE id=$4",
+        txn_id, STATE_CREATED, create_ms, payment.id,
+    )
     return _rpc(rpc_id, result={
         "create_time": create_ms, "transaction": str(payment.id), "state": STATE_CREATED})
 
@@ -250,13 +249,10 @@ async def _check_txn(rpc_id, params):
 
 async def _statement(rpc_id, params):
     frm, to = params.get("from", 0), params.get("to", 0)
-    async with __import__("aiosqlite").connect(core.DB_PATH) as db:
-        db.row_factory = __import__("aiosqlite").Row
-        cur = await db.execute(
-            "SELECT * FROM payments WHERE provider='payme' AND payme_create_ms BETWEEN ? AND ?",
-            (frm, to),
-        )
-        rows = await cur.fetchall()
+    rows = await db.fetch(
+        "SELECT * FROM payments WHERE provider='payme' AND payme_create_ms BETWEEN $1 AND $2",
+        frm, to,
+    )
     txns = [{
         "id": r["provider_txn_id"],
         "time": r["payme_create_ms"],
@@ -273,11 +269,8 @@ async def _statement(rpc_id, params):
 
 
 async def _payme_times(payment_id: int) -> dict:
-    async with __import__("aiosqlite").connect(core.DB_PATH) as db:
-        db.row_factory = __import__("aiosqlite").Row
-        cur = await db.execute(
-            "SELECT payme_create_ms, payme_perform_ms, payme_cancel_ms, payme_reason "
-            "FROM payments WHERE id=?", (payment_id,))
-        r = await cur.fetchone()
+    r = await db.fetchrow(
+        "SELECT payme_create_ms, payme_perform_ms, payme_cancel_ms, payme_reason "
+        "FROM payments WHERE id=$1", payment_id)
     return {"create_ms": r["payme_create_ms"], "perform_ms": r["payme_perform_ms"],
             "cancel_ms": r["payme_cancel_ms"], "reason": r["payme_reason"]}

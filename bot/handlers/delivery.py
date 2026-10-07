@@ -86,12 +86,4 @@ async def resend_file(bot: Bot, user_id: int, mod_id: int) -> None:
 
 async def _increment_downloads(mod_id: int) -> None:
     """Modni yuklab olishlar sonini 1 ga oshiradi."""
-    import aiosqlite
-    from bot.database import DB_PATH
-
-    async with aiosqlite.connect(DB_PATH) as db_conn:
-        await db_conn.execute(
-            "UPDATE mods SET downloads = downloads + 1 WHERE id = ?",
-            (mod_id,),
-        )
-        await db_conn.commit()
+    await db.increment_downloads(mod_id)

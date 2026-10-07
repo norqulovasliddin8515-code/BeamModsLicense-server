@@ -17,11 +17,12 @@ os.environ.update(
     DRM_SIGNING_KEY_FILE=os.path.join(_TMP, "drm.pem"),
     DRM_MODS_DIR=os.path.join(_TMP, "mods"),
 )
+os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, ROOT)
 
 import bot.database as db
-db.DB_PATH = os.path.join(_TMP, "t.db")
+from bot import db as dbpool
 
 from bot.payments import core, manual
 from bot.drm import keys as drm_keys
@@ -68,18 +69,16 @@ class FakeCb:
 
 
 async def seed_mod(price=5000, mod_key=None):
-    import aiosqlite
-    async with aiosqlite.connect(db.DB_PATH) as c:
-        await c.execute("INSERT INTO mods(name,category,price,file_id) VALUES('M','cars',?,'PLAINFILE')", (price,))
-        await c.commit()
-        cur = await c.execute("SELECT id FROM mods ORDER BY id DESC LIMIT 1")
-        mid = (await cur.fetchone())[0]
-        if mod_key:
-            await c.execute("UPDATE mods SET mod_key=? WHERE id=?", (mod_key, mid)); await c.commit()
+    mid = await db.add_mod("M", "cars", "d", price, "", "", "PLAINFILE")
+    if mod_key:
+        await db.set_mod_key(mid, mod_key)
     return mid
 
 
 async def main():
+    await dbpool.init_pool(os.environ["TEST_DATABASE_URL"])
+    await dbpool.execute("DROP SCHEMA public CASCADE")
+    await dbpool.execute("CREATE SCHEMA public")
     await db.init_db()
     await core.init_payment_tables()
     bot = FakeBot()
@@ -155,11 +154,7 @@ async def main():
     check("DRM: sent via FSInputFile (bundle), not plain", SENT["docs"][-1][1] == "FSInputFile")
     check("DRM: plain delivery NOT used for keyed mod", (3003, drm_mod_id) not in PLAIN)
     # a license row was issued
-    from bot.drm import licenses
-    import aiosqlite
-    async with aiosqlite.connect(db.DB_PATH) as c:
-        cur = await c.execute("SELECT COUNT(*) FROM licenses WHERE user_id=3003 AND mod_key='carmod'")
-        n = (await cur.fetchone())[0]
+    n = await dbpool.fetchval("SELECT COUNT(*) FROM licenses WHERE user_id=3003 AND mod_key='carmod'")
     check("DRM: license issued", n == 1)
 
     # ===== subscription via card =====
@@ -173,6 +168,7 @@ async def main():
     check("sub via card activated", SUB.count((4004, "pro")) == 1)
     db.upgrade_subscription = orig
 
+    await dbpool.close_pool()
     shutil.rmtree(_TMP, ignore_errors=True)
     print(f"\n{PASS} passed, {FAIL} failed")
     sys.exit(1 if FAIL else 0)

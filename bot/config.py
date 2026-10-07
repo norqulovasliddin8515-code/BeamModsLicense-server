@@ -69,3 +69,7 @@ STARS_UZS_RATE: float = float(os.getenv("STARS_UZS_RATE", "170"))
 # Shown to UZ users who pay by card; they upload a receipt for admin approval.
 CARD_NUMBER: str = os.getenv("CARD_NUMBER", "8600 0000 0000 0000")
 CARD_HOLDER: str = os.getenv("CARD_HOLDER", "")
+
+# ── PostgreSQL (Phase 4) ──────────────────────────────────────
+# asyncpg DSN, e.g. postgresql://beammods:PASS@127.0.0.1:5432/beammods
+DATABASE_URL: str = os.getenv("DATABASE_URL", "")

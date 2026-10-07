@@ -127,12 +127,8 @@ async def cmd_setmodkey(message: types.Message, command: CommandObject):
         await message.answer("Usage: <code>/setmodkey &lt;mod_id&gt; &lt;mod_key&gt;</code>")
         return
     mod_id, mod_key = int(parts[0]), parts[1]
-    import aiosqlite
-    from bot.database import DB_PATH
-    async with aiosqlite.connect(DB_PATH) as db:
-        cur = await db.execute("UPDATE mods SET mod_key=? WHERE id=?", (mod_key, mod_id))
-        await db.commit()
-    ok = cur.rowcount == 1
+    from bot import database as db_mod
+    ok = await db_mod.set_mod_key(mod_id, mod_key)
     await message.answer(
         (f"✅ Mod #{mod_id} → DRM key <code>{mod_key}</code>.\n"
          f"Manba: <code>DRM_MODS_DIR/{mod_key}/</code> bo'lishi kerak." if ok

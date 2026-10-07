@@ -529,11 +529,7 @@ async def apply_image_edit(callback: types.CallbackQuery):
     image_url = f"tg_photo:{file_id}"
 
     # Bazani yangilash
-    import aiosqlite
-    from bot.database import DB_PATH
-    async with aiosqlite.connect(DB_PATH) as db_conn:
-        await db_conn.execute("UPDATE mods SET image_url=? WHERE id=?", (image_url, mod_id))
-        await db_conn.commit()
+    await db.set_mod_image(mod_id, image_url)
 
     # Vercel va GitHubga sinxronizatsiya
     await sync_mods_to_github()
