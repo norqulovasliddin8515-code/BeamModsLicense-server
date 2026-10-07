@@ -153,49 +153,49 @@ async def cb_show_current_plan(callback: types.CallbackQuery):
 
 @router.callback_query(F.data.in_({"buy_pro", "buy_max"}))
 async def cb_buy_plan(callback: types.CallbackQuery):
-    """Foydalanuvchi Pro yoki Max tanladi — to'lov havolasini yuboradi."""
+    """Foydalanuvchi Pro/Max tanladi — to'lov usulini so'raydi."""
     await callback.answer()
-    tier     = "pro" if callback.data == "buy_pro" else "max"
-    tier_info = db.TIERS[tier]
-    user_id  = callback.from_user.id
-    price    = tier_info["price_uzs"]
-
-    # ── Click.uz to'lov havolasi ──────────────────────────────────
-    # Haqiqiy loyihada bu Click yoki Payme havolasi bo'ladi.
-    # Format: https://my.click.uz/services/pay?service_id=...&amount=...&transaction_param=...
-    # transaction_param sifatida "sub_{user_id}_{tier}" formatini ishlatamiz
-    transaction_param = f"sub_{user_id}_{tier}"
-
-    # TODO: .env dan CLICK_SERVICE_ID ni oling
-    from bot.config import CLICK_SERVICE_ID, CLICK_MERCHANT_ID
-    click_url = (
-        f"https://my.click.uz/services/pay"
-        f"?service_id={CLICK_SERVICE_ID}"
-        f"&merchant_id={CLICK_MERCHANT_ID}"
-        f"&amount={price}"
-        f"&transaction_param={transaction_param}"
-        f"&return_url=https://t.me/BeamModsStudio_bot"
-    )
-
+    tier = "pro" if callback.data == "buy_pro" else "max"
+    info = db.TIERS[tier]
+    price = info["price_uzs"]
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💳 Click.uz orqali to'lash", url=click_url)],
+        [InlineKeyboardButton(text="⭐️ Telegram Stars", callback_data=f"pay:stars:{tier}")],
+        [InlineKeyboardButton(text="💳 Karta orqali (UZS)", callback_data=f"pay:card:{tier}")],
         [InlineKeyboardButton(text="Orqaga", callback_data="show_plans")],
     ])
-
     await callback.message.answer(
-        f"{tier_info['emoji']} <b>{tier_info['name']} Tarif</b>\n\n"
+        f"{info['emoji']} <b>{info['name']} Tarif</b>\n\n"
         f"Narx: <b>{price:,} UZS/oy</b>\n\n".replace(",", " ") +
-        f"To'lov tugmasini bosing. To'lovdan so'ng obunangiz "
-        f"<b>avtomatik 30 kun</b> ga faollashadi.",
-        parse_mode="HTML",
-        reply_markup=kb,
+        "To'lov usulini tanlang. To'lovdan so'ng obuna <b>avtomatik 30 kun</b> ga faollashadi.",
+        parse_mode="HTML", reply_markup=kb,
     )
 
 
-# ─────────────────────────────────────────────────────────────────────
-#  Admin: Manuel upgrade (test yoki sovg'a uchun)
-#  /giveplan <user_id> <tier> [days]
-# ─────────────────────────────────────────────────────────────────────
+@router.callback_query(F.data.startswith("pay:"))
+async def cb_pay_method(callback: types.CallbackQuery, bot: Bot):
+    """Click/Payme uchun havola; Stars uchun invoice yuboradi."""
+    await callback.answer()
+    try:
+        _, provider, tier = callback.data.split(":", 2)
+    except ValueError:
+        return
+    if tier not in ("pro", "max") or provider not in ("stars", "card"):
+        return
+    from bot.payments import core as pay_core
+    from bot.payments import stars as pay_stars
+    from bot.payments import manual as pay_manual
+    intent = f"sub:{tier}"
+    info = db.TIERS[tier]
+
+    if provider == "stars":
+        await pay_stars.send_stars_invoice(
+            bot, callback.from_user.id, intent,
+            title=f"{info['name']} obuna (30 kun)",
+            description=f"BeamModsStudio {info['name']} — 30 kunlik obuna.",
+        )
+    else:  # card
+        await pay_manual.start_card_payment(bot, callback.from_user.id, intent)
+
 
 @router.message(
     F.text.startswith("/giveplan"),

@@ -1,0 +1,47 @@
+# /etc/systemd/system/beammods.service
+[Unit]
+Description=BeamModsStudio — aiogram webhook bot + aiohttp API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=beammods
+Group=beammods
+WorkingDirectory=/opt/beammods/app
+# .env is read by python-dotenv (bot/config.py), NOT by systemd —
+# systemd's EnvironmentFile would keep inline "# comments" inside values.
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/beammods/venv/bin/python -m bot.main
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+# ── Hardening ──
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/beammods/app /opt/beammods/backups
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+UMask=0027
+MemoryMax=1G
+
+[Install]
+WantedBy=multi-user.target

@@ -849,6 +849,12 @@
                 ⬇️ Yuklab olish
             </button>
         </div>
+        <!-- Priced mods: two payment options (shown instead of download) -->
+        <div class="sheet-buy" id="sheetBuy" style="display:none; gap:10px; flex-direction:column; margin-top:10px;">
+            <div id="sheetPriceLbl" style="text-align:center; font-weight:700; margin-bottom:4px;"></div>
+            <button class="sheet-dl-btn" onclick="startPurchase('stars')">⭐️ Telegram Stars orqali</button>
+            <button class="sheet-dl-btn" style="background:#0ea5e9" onclick="startPurchase('card')">💳 Karta orqali (UZS)</button>
+        </div>
     </div>
 </div>
 
@@ -911,7 +917,8 @@ function getTelegramUserId() {
 // ── State ────────────────────────────────────────────
 let allMods = [], currentMod = null, currentTab = 'catalog';
 let currentShortIdx = 0, ytPlayers = {}, shortMods = [];
-const API_URL = 'https://footsore-ungraded-till.ngrok-free.dev';
+// Backend (VPS) manzili — o'z domeningizga almashtiring, oxirida / yo'q
+const API_URL = 'https://api.example.com';
 
 // ── Load catalog ─────────────────────────────────────
 async function loadCatalog() {
@@ -920,7 +927,7 @@ async function loadCatalog() {
     let data = null;
     const bust = '?_t=' + Date.now();
     try {
-        const r = await fetch('/api/mods' + bust, { cache:'no-store' });
+        const r = await fetch(`${API_URL}/api/mods${bust}`, { cache:'no-store' });
         if (r.ok) { const p = await r.json(); if (p?.ok && p.mods?.length) data = p; }
     } catch(e) {}
     if (!data) {
@@ -942,11 +949,13 @@ async function loadCatalog() {
         allMods = data.mods.map(m => {
             let thumb = m.image_url || m.thumbnail || '';
             // Orqa tomondan kelganda URL allaqachon /api/photo/... bo'ladi, unga ham kesh-buster qo'shish kerak
+            // Rasm yangilansa file_id o'zgaradi -> URL o'zgaradi, kesh-buster kerak emas
             if (thumb.includes('/api/photo/')) {
-                thumb = thumb + (thumb.includes('?') ? '&' : '?') + `_t=${Date.now()}`;
+                const pid = thumb.split('/api/photo/')[1].split('?')[0];
+                thumb = `${API_URL}/api/photo/${pid}`;
             } else if (thumb.startsWith('tg_photo:')) {
                 const pid = thumb.replace('tg_photo:', '');
-                thumb = `/api/photo/${pid}?_t=${Date.now()}`;
+                thumb = `${API_URL}/api/photo/${pid}`;
             }
             return { ...m, youtube_url: m.video_url || '', thumbnail: thumb };
         });
@@ -1118,12 +1127,26 @@ function openSheet(modId) {
     const btn = document.getElementById('sheetCtaBtn');
     btn.textContent = '⬇️ Yuklab olish';
     btn.disabled = false; btn.style.background = '';
+
+    // Priced mods -> payment options; free mods -> direct download.
+    const buyBox = document.getElementById('sheetBuy');
+    const price = Number(mod.price || 0);
+    if (price > 0) {
+        btn.style.display = 'none';
+        buyBox.style.display = 'flex';
+        document.getElementById('sheetPriceLbl').textContent =
+            'Narx: ' + price.toLocaleString('ru-RU').replace(/,/g,' ') + ' UZS';
+    } else {
+        btn.style.display = '';
+        buyBox.style.display = 'none';
+    }
+
     document.getElementById('backdrop').classList.add('open');
     document.getElementById('modSheet').classList.add('open');
     tg.HapticFeedback.impactOccurred('medium');
 }
 // ── Admin Image Upload ─────────────────────────────────
-const BOT_TOKEN_CLIENT = '8665911741:AAHg-R9XtJjDVaGxX6H5eG7AB8koA95YH3g';
+// Bot token brauzerda SAQLANMAYDI — rasm backend /api/upload_image orqali yuklanadi.
 
 async function handleImageSelect(event) {
     const file = event.target.files[0];
@@ -1160,30 +1183,26 @@ async function handleImageSelect(event) {
         // Oldindan ko'rsatish (preview)
         document.getElementById('sheetImg').src = URL.createObjectURL(blob);
 
-        // 2) To'g'ridan-to'g'ri Telegram Bot API ga yuborish (CORS yo'q - Telegram ruxsat beradi)
-        const uid = getTelegramUserId();
-        const markup = JSON.stringify({inline_keyboard:[[{text:'✅ Tasdiqlash va Saqlash', callback_data:`applyimg_${currentMod.id}`}]]});
-        
-        const fd = new FormData();
-        fd.append('chat_id', uid);
-        fd.append('photo', blob, 'photo.jpg');
-        fd.append('caption', `🖼 <b>${currentMod.name}</b> uchun yangi rasm.\n\nSaqlash uchun quyidagi tugmani bosing.`);
-        fd.append('parse_mode', 'HTML');
-        fd.append('reply_markup', markup);
-
-        const tgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN_CLIENT}/sendPhoto`, {
-            method: 'POST',
-            body: fd
+        // 2) Backend orqali yuklash (admin tekshiruvi serverda, signed initData bilan)
+        const dataUrl = await new Promise((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => resolve(fr.result);
+            fr.onerror = reject;
+            fr.readAsDataURL(blob);
         });
-        const tgData = await tgRes.json();
-
-        if (!tgData.ok) {
-            throw new Error('Telegram xatosi: ' + tgData.description);
+        const upRes = await fetch(`${API_URL}/api/upload_image`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mod_id: currentMod.id, image_base64: dataUrl, init_data: tg.initData })
+        });
+        const upData = await upRes.json().catch(() => ({ ok:false, error:'HTTP ' + upRes.status }));
+        if (!upData.ok) {
+            throw new Error(upData.error || 'Yuklashda xatolik');
         }
 
         tg.HapticFeedback?.notificationOccurred?.('success');
-        alert("✅ Rasm botga yuborildi!\n\nBot xabaridagi '✅ Tasdiqlash' tugmasini bosing.");
-        tg.close();
+        alert("✅ Rasm saqlandi! Katalog bir necha soniyada yangilanadi.");
+        btn.innerHTML = '✏️';
 
     } catch(e) {
         alert('Xatolik: ' + e.message);
@@ -1222,7 +1241,7 @@ async function downloadCurrent() {
 
     // 1. Vercel
     try {
-        const r = await fetch('/api/download', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ mod_id:currentMod.id, user_id:uid }) });
+        const r = await fetch(`${API_URL}/api/download`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ mod_id:currentMod.id, init_data:tg.initData }) });
         const d = await r.json();
         if (d.ok) {
             btn.textContent = '✅ Yuborildi! Chat-ni oching';
@@ -1240,7 +1259,7 @@ async function downloadCurrent() {
     // 2. Ngrok
     if (API_URL) {
         try {
-            const r = await fetch(`${API_URL}/api/download`, { method:'POST', headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'}, body:JSON.stringify({ mod_id:currentMod.id, user_id:uid }) });
+            const r = await fetch(`${API_URL}/api/download`, { method:'POST', headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'}, body:JSON.stringify({ mod_id:currentMod.id, init_data:tg.initData }) });
             const d = await r.json();
             if (d.ok) {
                 btn.textContent = '✅ Yuborildi! Chat-ni oching'; btn.style.background = '#10b981';
@@ -1261,6 +1280,39 @@ async function downloadCurrent() {
 
     btn.textContent = '❌ Xatolik — qayta urinib ko\'ring'; btn.style.background = '#ef4444';
     setTimeout(() => { btn.textContent='⬇️ Yuklab olish'; btn.disabled=false; btn.style.background=''; }, 2500);
+}
+
+// ── Purchase (Stars / Card) ────────────────────────────
+async function startPurchase(provider) {
+    if (!currentMod) return;
+    const uid = getTelegramUserId();
+    if (!uid) { alert('Telegram bot orqali oching.'); return; }
+    const box = document.getElementById('sheetBuy');
+    box.style.opacity = '0.6';
+    try {
+        const r = await fetch(`${API_URL}/api/pay/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                init_data: tg.initData,
+                intent: 'mod:' + currentMod.id,
+                provider: provider,
+            }),
+        });
+        const d = await r.json().catch(() => ({ ok: false }));
+        if (!d.ok) { alert('Xatolik: ' + (d.error || r.status)); box.style.opacity='1'; return; }
+        tg.HapticFeedback?.notificationOccurred?.('success');
+        if (provider === 'stars') {
+            alert("⭐️ Hisob-faktura botga yuborildi. To'lovni Telegram'da yakunlang.");
+        } else {
+            alert("💳 Karta ma'lumotlari botga yuborildi. Pulni o'tkazib, chek rasmini botga yuboring.");
+        }
+        closeSheet();
+        tg.close();
+    } catch (e) {
+        alert('Tarmoq xatosi: ' + e.message);
+        box.style.opacity = '1';
+    }
 }
 
 // ── Orders & AI ────────────────────────────────────────

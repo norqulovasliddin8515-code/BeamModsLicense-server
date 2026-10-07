@@ -29,3 +29,10 @@ mods.db
 .idea/
 .vscode/
 Thumbs.db
+
+# DRM signing keys — NEVER commit
+*.pem
+keys/
+
+# test artefacts
+tests/drm/vectors.lua
