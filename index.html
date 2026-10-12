@@ -1353,14 +1353,44 @@ function renderCategories(cats) {
 }
 
 function selectCategoryFromPage(catId) {
-    const chips = Array.from(document.querySelectorAll('.chip'));
-    // Bosilgan kategoriyaning tugmasini topamiz
-    let targetChip = chips.find(c => c.getAttribute('onclick').includes(catId)) || chips[0];
+    // 1. Kategoriyalar ro'yxatini yashirib, modlar qismini ochamiz
+    document.getElementById('catListSection').style.display = 'none';
+    document.getElementById('catModsSection').style.display = 'block';
+    document.getElementById('catModsTitle').innerText = catId;
+
+    // 2. O'sha kategoriyaga tegishli modlarni filtrlash
+    const filteredMods = allMods.filter(m => m.category === catId);
     
-    filterCatalog(catId, targetChip);
-    switchNav('catalog', document.querySelectorAll('.nav-btn')[0]);
+    // 3. Ekranga chizish
+    const grid = document.getElementById('catModsGrid');
+    if (!filteredMods.length) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><div class="empty-icon">🔍</div><div class="empty-text">Bu kategoriyada hozircha mod yo'q</div></div>`;
+        return;
+    }
+
+    grid.innerHTML = filteredMods.map(mod => `
+        <div class="card" onclick="openSheet(${mod.id})">
+            <div class="card-heart" onclick="event.stopPropagation(); this.classList.toggle('liked'); this.textContent = this.classList.contains('liked') ? '❤️' : '🤍'; tg.HapticFeedback.impactOccurred('light')">🤍</div>
+            <div class="card-img-wrap">
+                <img src="${mod.thumbnail}" alt="${mod.name}" loading="lazy"
+                     onerror="this.src='https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400'">
+            </div>
+            <div class="card-body">
+                <div class="card-cat">${mod.category}</div>
+                <div class="card-name">${mod.name}</div>
+                <button class="card-dl-btn" onclick="event.stopPropagation(); openSheet(${mod.id})">
+                    ⬇️ Yuklab olish
+                </button>
+            </div>
+        </div>`).join('');
 }
 
+function closeCategoryMods() {
+    // "Ortga" bosilganda modlar qismini yashirib, yana kategoriyalar ro'yxatini ochamiz
+    document.getElementById('catModsSection').style.display = 'none';
+    document.getElementById('catListSection').style.display = 'block';
+    tg.HapticFeedback.impactOccurred('light');
+}
 // ── Init ───────────────────────────────────────────────
 loadCatalog();
 loadCategories(); // Yangi dinamik yuklash
