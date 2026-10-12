@@ -708,47 +708,28 @@
         <div class="short-dots" id="shortDots"></div>
     </div>
 
-    <!-- ══ CATEGORIES PAGE ════════════════════════════ -->
+   <!-- ══ CATEGORIES PAGE ════════════════════════════ -->
     <div class="page" id="page-categories" style="background:var(--bg); padding:20px; overflow-y:auto; padding-bottom:120px;">
-        <h2 style="margin-bottom:20px; color:var(--dark); font-weight:800; letter-spacing:-0.5px; font-size:24px;">Kategoriyalar</h2>
         
-        <div style="display:grid; grid-template-columns:1fr; gap:14px;">
-            <div onclick="selectCategoryFromPage('cars')" style="background:var(--white); border-radius:20px; padding:20px; display:flex; align-items:center; gap:16px; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .15s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-                <div style="width:60px; height:60px; background:var(--orange-lt); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px;">🚗</div>
-                <div style="flex:1;">
-                    <div style="font-weight:800; font-size:17px; color:var(--dark); margin-bottom:4px;">Avtomobillar</div>
-                    <div style="color:var(--gray); font-size:13px; line-height:1.4;">Eng mashhur va premium mashina modlari</div>
-                </div>
-                <div style="color:var(--gray2); font-size:20px;">→</div>
-            </div>
-
-            <div onclick="selectCategoryFromPage('trucks')" style="background:var(--white); border-radius:20px; padding:20px; display:flex; align-items:center; gap:16px; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .15s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-                <div style="width:60px; height:60px; background:var(--orange-lt); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px;">🚛</div>
-                <div style="flex:1;">
-                    <div style="font-weight:800; font-size:17px; color:var(--dark); margin-bottom:4px;">Yuk mashinalari</div>
-                    <div style="color:var(--gray); font-size:13px; line-height:1.4;">Og'ir texnikalar, avtobuslar va tirkamalar</div>
-                </div>
-                <div style="color:var(--gray2); font-size:20px;">→</div>
-            </div>
-
-            <div onclick="selectCategoryFromPage('maps')" style="background:var(--white); border-radius:20px; padding:20px; display:flex; align-items:center; gap:16px; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .15s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-                <div style="width:60px; height:60px; background:var(--orange-lt); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px;">🗺️</div>
-                <div style="flex:1;">
-                    <div style="font-weight:800; font-size:17px; color:var(--dark); margin-bottom:4px;">Xaritalar (Maps)</div>
-                    <div style="color:var(--gray); font-size:13px; line-height:1.4;">Katta ochiq dunyo va poyga trassalari</div>
-                </div>
-                <div style="color:var(--gray2); font-size:20px;">→</div>
-            </div>
-
-            <div onclick="selectCategoryFromPage('3d_models')" style="background:var(--white); border-radius:20px; padding:20px; display:flex; align-items:center; gap:16px; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .15s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-                <div style="width:60px; height:60px; background:var(--orange-lt); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px;">🎨</div>
-                <div style="flex:1;">
-                    <div style="font-weight:800; font-size:17px; color:var(--dark); margin-bottom:4px;">3D Modellar</div>
-                    <div style="color:var(--gray); font-size:13px; line-height:1.4;">Ehtiyot qismlar, tuning va boshqalar</div>
-                </div>
-                <div style="color:var(--gray2); font-size:20px;">→</div>
+        <!-- Kategoriyalar ro'yxati -->
+        <div id="catListSection">
+            <h2 style="margin-bottom:20px; color:var(--dark); font-weight:800; letter-spacing:-0.5px; font-size:24px;">Kategoriyalar</h2>
+            <div id="categoriesListWrap" style="display:grid; grid-template-columns:1fr; gap:14px;">
+                <!-- Dinamik kategoriyalar shu yerga tushadi -->
             </div>
         </div>
+
+        <!-- Tanlangan kategoriya modlari (boshida yashirin turadi) -->
+        <div id="catModsSection" style="display:none;">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; cursor:pointer;" onclick="closeCategoryMods()">
+                <div style="width:36px; height:36px; background:var(--white); border-radius:12px; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); font-size:18px; color:var(--dark);" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'">←</div>
+                <h2 id="catModsTitle" style="color:var(--dark); font-weight:800; letter-spacing:-0.5px; font-size:22px; margin:0;">Modlar</h2>
+            </div>
+            <div class="grid" id="catModsGrid">
+                <!-- O'sha kategoriyaga tegishli modlar shu yerga tushadi -->
+            </div>
+        </div>
+        
     </div>
 
     <!-- ══ ORDERS PAGE ════════════════════════════════ -->
