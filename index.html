@@ -1326,14 +1326,55 @@ setTimeout(() => {
     }
 }, 500);
 
-// ── Categories ─────────────────────────────────────────
+// ── Categories (Dinamik) ───────────────────────────────
+async function loadCategories() {
+    try {
+        const r = await fetch(`${API_URL}/api/categories?_t=${Date.now()}`);
+        if (r.ok) {
+            const data = await r.json();
+            if (data.ok && data.categories) {
+                renderCategories(data.categories);
+            }
+        }
+    } catch(e) { console.error("Kategoriyalar yuklanmadi", e); }
+}
+
+function renderCategories(cats) {
+    const chipsCont = document.querySelector('.chips');
+    const pageCont = document.querySelector('#page-categories > div');
+    
+    let chipsHtml = `<div class="chip active" onclick="filterCatalog('all', this)">Barchasi</div>`;
+    let pageHtml = '';
+
+    cats.forEach(c => {
+        const catName = c.name;
+        
+        // Gorizontal tugmalar (Chips) uchun
+        chipsHtml += `<div class="chip" onclick="filterCatalog('${catName}', this)">${catName}</div>`;
+        
+        // "Katalog" (Kategoriyalar) sahifasidagi katta kartochkalar uchun
+        pageHtml += `
+        <div onclick="selectCategoryFromPage('${catName}')" style="background:var(--white); border-radius:20px; padding:20px; display:flex; align-items:center; gap:16px; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .15s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+            <div style="width:60px; height:60px; background:var(--orange-lt); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px;">📂</div>
+            <div style="flex:1;">
+                <div style="font-weight:800; font-size:17px; color:var(--dark); margin-bottom:4px;">${catName}</div>
+                <div style="color:var(--gray); font-size:13px; line-height:1.4;">${catName} modlari to'plami</div>
+            </div>
+            <div style="color:var(--gray2); font-size:20px;">→</div>
+        </div>`;
+    });
+
+    // Agar bazada kategoriya bo'lsa, HTML ni yangilaymiz
+    if (cats.length > 0) {
+        chipsCont.innerHTML = chipsHtml;
+        pageCont.innerHTML = pageHtml;
+    }
+}
+
 function selectCategoryFromPage(catId) {
-    const chips = document.querySelectorAll('.chip');
-    let targetChip = chips[0];
-    if(catId === 'cars') targetChip = chips[1];
-    if(catId === 'trucks') targetChip = chips[2];
-    if(catId === 'maps') targetChip = chips[3];
-    if(catId === '3d_models') targetChip = chips[4];
+    const chips = Array.from(document.querySelectorAll('.chip'));
+    // Bosilgan kategoriyaning tugmasini topamiz
+    let targetChip = chips.find(c => c.getAttribute('onclick').includes(catId)) || chips[0];
     
     filterCatalog(catId, targetChip);
     switchNav('catalog', document.querySelectorAll('.nav-btn')[0]);
@@ -1341,6 +1382,7 @@ function selectCategoryFromPage(catId) {
 
 // ── Init ───────────────────────────────────────────────
 loadCatalog();
+loadCategories(); // Yangi dinamik yuklash
 </script>
 </body>
 </html>
