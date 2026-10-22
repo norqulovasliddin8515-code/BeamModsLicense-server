@@ -285,21 +285,10 @@ select.chip option { background: #161b22; color: #fff; }
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
-
-<!-- ✅ TELEGRAM SDK — birinchi bo'lib yuklanadi -->
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-const API_URL = 'http://2.28.39.161:8080';
-const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-window.tg = tg;
-if (tg) {
-  tg.ready();
-  tg.expand();                                  // to'liq balandlikka ochadi
-  if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();  // pastga surib yopilmasin
-  try { if (tg.requestFullscreen) tg.requestFullscreen(); } catch (e) {}
-  // Telegram mavzusiga moslash (ixtiyoriy): agar foydalanuvchi Telegramda light tema bo'lsa
-  try { if (tg.colorScheme === 'light') document.documentElement.setAttribute('data-theme','light'); } catch(e){}
-}
+const API_URL = '';
+const tg = window.Telegram?.WebApp;
+if(tg) { tg.expand(); tg.ready(); }
 </script>
 
 <div id="wall" aria-hidden="true">
@@ -344,7 +333,7 @@ if (tg) {
       <button class="rbtn menuBtn" id="menuBtn" aria-label="Menyu"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
       <div class="search"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.2-3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input id="q" placeholder="Modlarni qidirish..."></div>
       <div class="tacts">
-        <button class="rbtn" onclick="if(window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.requestFullscreen){window.Telegram.WebApp.requestFullscreen();}else if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen();}" title="To'liq ekran" style="font-size:16px;">⛶</button>
+        <button class="rbtn" onclick="if(window.Telegram?.WebApp?.requestFullscreen) { Telegram.WebApp.requestFullscreen(); } else if(document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen(); }" title="To'liq ekran" style="font-size:16px;">⛶</button>
         <button class="rbtn" id="themeBtn" aria-label="Mavzu"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
         <button class="rbtn" aria-label="Bildirishnoma"><span class="dotn"></span><svg viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 19a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.8"/></svg></button>
         <span class="prof"><span class="av">A</span><b>Asliddin</b><svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -361,7 +350,7 @@ if (tg) {
           <span class="seg" role="group" aria-label="Obuna"><button id="stNo" aria-pressed="true">Obunasiz</button><button id="stPro" aria-pressed="false">Pro</button></span>
           <span class="seg" role="group" aria-label="Admin"><button id="adOff" aria-pressed="true">Oddiy</button><button id="adOn" aria-pressed="false">Admin</button></span>
         </div>
-
+        
         <div id="filterBar" style="display:flex; align-items:center; justify-content:space-between; margin:16px 0 2px; gap:12px;">
           <nav class="rail" id="rail" aria-label="Kategoriyalar" style="margin:0; padding-bottom:0; flex:1;"></nav>
           <div style="position:relative; flex:none;">
@@ -456,7 +445,7 @@ function drawGrad(cv,g){const d=cv.getContext("2d"),w=cv.width=cv.clientWidth*2,
   d.fillStyle="rgba(255,255,255,.22)";[[-40,cy],[42,cy]].forEach(p=>{d.beginPath();d.arc(cx+p[0]*s,p[1],7*s,0,7);d.fill();});}
 function drawCover(cv,src){let img=imgCache[src];const go=()=>{const w=cv.width=cv.clientWidth*2,h=cv.height=cv.clientHeight*2,d=cv.getContext("2d");
   const r=Math.max(w/img.width,h/img.height),iw=img.width*r,ih=img.height*r;d.clearRect(0,0,w,h);d.drawImage(img,(w-iw)/2,(h-ih)/2,iw,ih);};
-  if(img&&img.complete){go();return;}img=new Image();img.crossOrigin="anonymous";imgCache[src]=img;img.onload=go;img.src=src;}
+  if(img&&img.complete){go();return;}img=new Image();imgCache[src]=img;img.onload=go;img.src=src;}
 function paint(cv,m){if(!cv)return;if(m.cover)drawCover(cv,m.cover);else drawGrad(cv,m.g);}
 
 const STAR='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l2.7 5.6 6.1.7-4.5 4.2 1.2 6L12 16.9 6.5 19.1l1.2-6L3.2 8.9l6.1-.7L12 2.6z"/></svg>';
@@ -479,14 +468,14 @@ function renderHero() {
     $(".hero-b h1").innerText = "Sevimlilar";
   } else {
     $(".k").innerText = "Xush kelibsiz";
-    $(".hero-b h1").innerText = (window.tg && window.tg.initDataUnsafe && window.tg.initDataUnsafe.user && window.tg.initDataUnsafe.user.first_name) || "Asliddin";
+    $(".hero-b h1").innerText = window.tg?.initDataUnsafe?.user?.first_name || "Asliddin";
   }
   renderSub();
 }
 
 function renderSub(){const el=$("#subBar");
   if(isPro){
-    const dleft = (window.subState && window.subState.days_left) || 30;
+    const dleft = window.subState?.days_left || 30;
     el.innerHTML=`<div class="subbar"><svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="3.2"/><circle cx="18" cy="18" r="15.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="97.4" stroke-dashoffset="34" transform="rotate(-90 18 18)"/><text x="18" y="16.5" text-anchor="middle" font-size="9" font-weight="800" fill="#fff" font-family="Saira">${dleft}</text><text x="18" y="24" text-anchor="middle" font-size="5" fill="rgba(255,255,255,.7)" font-family="Hanken Grotesk">KUN</text></svg><div class="txt"><div class="st">Pro obuna <span class="dot" style="background:#2fd08a"></span></div><div class="ss">Barcha modlar ochiq</div></div></div>`;
   }
   else {
@@ -665,7 +654,7 @@ document.addEventListener("click",e=>{
   const tset=e.target.closest("[data-theme-set]");if(tset){document.documentElement.setAttribute("data-theme",tset.dataset.themeSet);repaintAll();renderSettings();return;}
   const wrm=e.target.closest("[data-wrm]");if(wrm){const i=+wrm.dataset.wrm,was=WALLS[i];WALLS.splice(i,1);if(activeWall===was){activeWall=null;applyWall();}renderSettings();return;}
   const wc=e.target.closest("[data-w]");if(wc){const v=wc.dataset.w;activeWall=v==="none"?null:WALLS[+v];applyWall();renderSettings();return;}
-
+  
   const chip=e.target.closest(".chip");
   if(chip && !chip.matches('select')){
     activeCat=chip.dataset.cat;
@@ -674,7 +663,7 @@ document.addEventListener("click",e=>{
     renderGrid();
     return;
   }
-
+  
   const op=e.target.closest("[data-open]");if(op){openSheet(window.MODS.find(m=>m.id==op.dataset.open));return;}
   const fv=e.target.closest("[data-fav]");
   if(fv){
@@ -683,7 +672,7 @@ document.addEventListener("click",e=>{
     renderGrid();
     return;
   }
-
+  
   if(e.target.closest("#editImg")){closeSheet();openEditor(currentMod);return;}
   if(e.target.closest("#paneEdit")){openEditor(editMod);return;}
   if(e.target.closest("#paneSave")){renderGrid();return;}
@@ -712,74 +701,261 @@ renderHero();renderRail();renderGrid();renderPane();
 addEventListener("resize",()=>{repaintAll();renderPane();});
 </script>
 
-<!-- BEAMMODS API (real data) -->
+<!-- BEAMMODS API & DRM OVERRIDE -->
+<style>
+  /* Desktop kichik oynada ham keng rejimga o'tish va Obuna kartasi siqilib qolmasligi uchun */
+  .subbar { flex-wrap: wrap; }
+  .subbar .txt { min-width: 120px; }
+  body.force-desktop .shell { grid-template-columns: 200px minmax(0,1fr) !important; }
+  body.force-desktop .side { position: sticky !important; transform: none !important; width: 200px !important; }
+  body.force-desktop .menuBtn, body.force-desktop .bnav { display: none !important; }
+  body.force-desktop .search { max-width: 100% !important; flex: 1 !important; }
+  body.force-desktop .search input, body.force-desktop .prof b { display: block !important; }
+</style>
 <script>
 (async function initRealData() {
-    let subState = { is_active: false, tier: 'free' };
+    const ADMIN_IDS = [7022141893];
+    const tgApp = window.Telegram?.WebApp;
+    if (tgApp) {
+        tgApp.expand();
+        tgApp.ready();
+    }
+
+    // Yuqoridagi ⛶ tugmasini kuchaytirish (Fullscreen + Desktop Layout Toggle)
+    const fsBtn = document.querySelector('.tacts button[title*="ekran"]');
+    if (fsBtn) {
+        fsBtn.onclick = function() {
+            if (tgApp?.requestFullscreen) {
+                try { tgApp.requestFullscreen(); } catch(e) {}
+            }
+            if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+            document.body.classList.toggle('force-desktop');
+            if (window.repaintAll) setTimeout(window.repaintAll, 150);
+        };
+    }
+
+    // 1. Foydalanuvchi ID va Admin huquqini darhol tekshirish
+    const tgUser = tgApp?.initDataUnsafe?.user;
+    if (tgUser) {
+        document.querySelectorAll('.prof b, .hero-b h1').forEach(el => el.textContent = tgUser.first_name || 'Admin');
+        const av = document.querySelector('.prof .av');
+        if (av && tgUser.first_name) av.textContent = tgUser.first_name[0].toUpperCase();
+        if (ADMIN_IDS.includes(Number(tgUser.id))) {
+            window.isAdmin = true;
+            const demoBar = document.querySelector('.demo');
+            if (demoBar) demoBar.style.display = 'flex';
+        }
+    }
+
+    // 2. Obuna va Admin holatini serverdan (/api/me) olish
+    let subState = { is_active: false, tier: 'free', days_left: 0 };
     try {
-        const res = await fetch(API_URL + '/api/me', {
+        const res = await fetch('/api/me', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ init_data: (window.tg && window.tg.initData) || '' })
+            body: JSON.stringify({ init_data: tgApp?.initData || '' })
         });
         const data = await res.json();
-        if (data.ok) subState = data.subscription;
-        window.isPro = subState.is_active && subState.tier !== 'free';
-        isPro = window.isPro;
-        window.subState = subState;
-        if (window.renderHero) window.renderHero();
-    } catch(e) {}
-
-    try {
-        const res = await fetch(API_URL + '/api/mods?_t=' + Date.now(), { cache: 'no-store' });
-        const data = await res.json();
-        if(data.ok && data.mods) {
-            window.MODS = data.mods.map(m => {
-                let img = m.image_url || '';
-                if(img.startsWith('tg_photo:')) img = API_URL + '/api/photo/' + img.split(':')[1];
-                return {
-                    id: m.id, name: m.name, by: 'BeamModsStudio', cat: m.category,
-                    pro: (m.price > 0 || m.mod_key) ? true : false, price: m.price,
-                    dl: m.downloads || 0, desc: m.description || '', g: ["#3a4654","#11161d"],
-                    cover: img || null, images: img ? [img] : [], fav: false, mod_key: m.mod_key
-                }
-            });
-            if (window.renderGrid) window.renderGrid();
+        if (data.ok) {
+            subState = data.subscription;
+            window.subState = subState;
+            window.isPro = Boolean(subState.is_active && subState.tier !== 'free');
+            if (data.is_admin || ADMIN_IDS.includes(Number(data.user_id))) {
+                window.isAdmin = true;
+                const demoBar = document.querySelector('.demo');
+                if (demoBar) demoBar.style.display = 'flex';
+            }
         }
-    } catch(e) {}
+    } catch (e) {
+        console.warn("API /api/me xatosi:", e);
+    }
 
-    // Yuklab olish va to'lov tugmalari (real server bilan)
+    if (window.sync) window.sync();
+
+    // 3. Modlarni bazadan (/api/mods yoki zaxira /mods.json) olish
+    async function fetchCatalogMods() {
+        const bust = '?_t=' + Date.now();
+        try {
+            const r = await fetch('/api/mods' + bust, { cache: 'no-store' });
+            if (r.ok) {
+                const d = await r.json();
+                if (d.ok && Array.isArray(d.mods)) return d.mods;
+            }
+        } catch (e) {}
+        try {
+            const r2 = await fetch('/mods.json' + bust, { cache: 'no-store' });
+            if (r2.ok) {
+                const d2 = await r2.json();
+                if (Array.isArray(d2)) return d2;
+                if (d2.mods && Array.isArray(d2.mods)) return d2.mods;
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    const rawMods = await fetchCatalogMods();
+    if (rawMods && rawMods.length > 0) {
+        const palettes = [
+            ["#3a4654","#11161d"], ["#2b6bd1","#0d1b2e"], ["#2f8f6b","#0c1f18"],
+            ["#8a3b2e","#1d0f0c"], ["#7a3f8f","#1f0c2e"], ["#8f5f2b","#2e1f0c"]
+        ];
+        window.MODS = rawMods.map((m, idx) => {
+            let img = m.image_url || '';
+            if (img.startsWith('tg_photo:')) {
+                img = '/api/photo/' + img.split(':')[1];
+            } else if (img.includes('/api/photo/')) {
+                img = '/api/photo/' + img.split('/api/photo/')[1];
+            }
+            const catMap = { 'cars': 'Vehicles', 'trucks': 'Modellar', 'maps': 'Maps' };
+            const normCat = catMap[(m.category || '').toLowerCase()] || m.category || 'Vehicles';
+            return {
+                id: m.id,
+                name: m.name,
+                by: m.mod_key ? 'BeamMods DRM' : 'BeamModsStudio',
+                cat: normCat,
+                pro: (Number(m.price) > 0 || Boolean(m.mod_key)),
+                price: Number(m.price) || 0,
+                dl: Number(m.downloads) || 0,
+                desc: m.description || '',
+                g: palettes[idx % palettes.length],
+                cover: img || null,
+                images: img ? [img] : [],
+                fav: false,
+                mod_key: m.mod_key || null
+            };
+        });
+
+        // Kategoriya ro'yxatini bazadagi modlarga moslash
+        const uniqueCats = ["Barchasi", ...new Set(window.MODS.map(x => x.cat).filter(Boolean))];
+        window.CATS.length = 0;
+        uniqueCats.forEach(c => window.CATS.push(c));
+
+        window.currentMod = window.MODS[0];
+        window.editMod = window.MODS[0];
+        window.activeCat = "Barchasi";
+        if (window.renderRail) window.renderRail();
+        if (window.renderGrid) window.renderGrid();
+    }
+
+    // 4. DRM modlar ustiga 🔒 DRM belgisini chiqarish
+    const origRenderGrid = window.renderGrid;
+    window.renderGrid = function() {
+        if (origRenderGrid) origRenderGrid();
+        window.MODS.forEach(m => {
+            if (m.mod_key) {
+                const thumb = document.querySelector(`.thumb[data-open="${m.id}"]`);
+                if (thumb && !thumb.querySelector('.drm-badge')) {
+                    const b = document.createElement('span');
+                    b.className = 'drm-badge';
+                    b.style.cssText = 'position:absolute;top:10px;right:10px;background:#10B981;color:#fff;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:800;z-index:5;';
+                    b.textContent = '🔒 DRM';
+                    thumb.appendChild(b);
+                }
+            }
+        });
+    };
+    window.renderGrid();
+
+    // 5. Admin rasm yuklab "Saqlash" bosganda serverga (/api/upload_image) yuborish
     document.addEventListener("click", async (e) => {
+        const saveBtn = e.target.closest("#imgSave") || e.target.closest("#paneSave");
+        if (saveBtn && window.isAdmin && window.editMod && window.editMod.cover?.startsWith("data:image")) {
+            saveBtn.textContent = "⏳ Saqlanmoqda...";
+            try {
+                const r = await fetch('/api/upload_image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mod_id: window.editMod.id,
+                        image_base64: window.editMod.cover,
+                        init_data: tgApp?.initData || ''
+                    })
+                });
+                const d = await r.json();
+                if (d.ok && d.file_id) {
+                    window.editMod.cover = '/api/photo/' + d.file_id;
+                    if (tgApp?.showAlert) tgApp.showAlert("✅ Rasm serverga saqlandi!");
+                } else {
+                    alert("Rasm saqlashda xato: " + (d.error || "noma'lum"));
+                }
+            } catch (err) {
+                alert("Server bilan aloqa xatosi!");
+            }
+        }
+
+        // 6. Yuklab olish tugmasi ([data-dl])
         const dlBtn = e.target.closest("[data-dl]");
         if (dlBtn) {
-            e.preventDefault(); e.stopPropagation();
-            const modId = dlBtn.dataset.dl;
-            const m = window.MODS.find(x => x.id == modId);
-            if (m && m.pro && !window.isPro) {
-                if(window.openScreen) window.openScreen("#proScreen");
+            e.preventDefault();
+            e.stopPropagation();
+            const modId = Number(dlBtn.dataset.dl);
+            const m = window.MODS.find(x => x.id === modId);
+            if (!m) return;
+
+            if (m.pro && !window.isPro) {
+                if (window.openScreen) window.openScreen("#proScreen");
                 return;
             }
+
             const origHTML = dlBtn.innerHTML;
-            dlBtn.innerHTML = '⏳'; dlBtn.style.pointerEvents = 'none';
+            dlBtn.innerHTML = '⏳';
+            dlBtn.style.pointerEvents = 'none';
             try {
-                const r = await fetch(API_URL + '/api/download', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mod_id: modId, init_data: (window.tg && window.tg.initData) || '' })
+                const r = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mod_id: modId, init_data: tgApp?.initData || '' })
                 });
                 const d = await r.json();
                 if (d.ok) {
-                    dlBtn.style.color = "var(--good)"; dlBtn.innerHTML = '✅';
-                    if (window.tg && window.tg.HapticFeedback) window.tg.HapticFeedback.notificationOccurred('success');
+                    dlBtn.style.color = "var(--good)";
+                    dlBtn.innerHTML = '✅';
+                    if (tgApp?.showAlert) tgApp.showAlert(`✅ "${m.name}" bot chatiga yuborildi!`);
                 } else if (d.error === 'subscription_required') {
-                    if(window.openScreen) window.openScreen("#proScreen");
-                } else { alert("Xato: " + d.error); }
-            } catch(err) { alert("Server xatosi"); }
-            finally { setTimeout(() => { dlBtn.innerHTML = origHTML; dlBtn.style.pointerEvents = 'auto'; }, 3000); }
+                    if (window.openScreen) window.openScreen("#proScreen");
+                } else {
+                    alert("Xato: " + (d.error || "yuklab bo'lmadi"));
+                }
+            } catch (err) {
+                alert("Server bilan ulanishda xatolik!");
+            } finally {
+                setTimeout(() => {
+                    dlBtn.innerHTML = origHTML;
+                    dlBtn.style.pointerEvents = 'auto';
+                }, 2500);
+            }
         }
-        if(e.target.closest(".toPro") || e.target.closest("#goPro") || e.target.closest("#openPro")) {
-            e.preventDefault(); e.stopPropagation();
-            if(window.tg && window.tg.sendData) { window.tg.sendData('/upgrade'); }
-            else { if(window.openScreen) window.openScreen("#proScreen"); }
+
+        // 7. Pro obuna sotib olish (Stars yoki Karta)
+        const payBtn = e.target.closest("#proScreen .pay button");
+        if (payBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const isStars = payBtn.classList.contains("big");
+            const provider = isStars ? "stars" : "card";
+            try {
+                const r = await fetch('/api/pay/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        intent: "sub:pro",
+                        provider: provider,
+                        init_data: tgApp?.initData || ''
+                    })
+                });
+                const d = await r.json();
+                if (d.ok) {
+                    if (tgApp?.showAlert) {
+                        tgApp.showAlert("✅ To'lov xabari bot chatiga yuborildi!", () => tgApp.close());
+                    }
+                } else {
+                    alert("To'lovni boshlashda xato: " + (d.error || ""));
+                }
+            } catch (err) {
+                alert("Aloqa xatosi!");
+            }
         }
     }, true);
 })();
