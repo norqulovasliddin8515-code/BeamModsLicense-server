@@ -285,10 +285,21 @@ select.chip option { background: #161b22; color: #fff; }
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+
+<!-- ✅ TELEGRAM SDK — birinchi bo'lib yuklanadi -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
 const API_URL = 'http://2.28.39.161:8080';
-const tg = window.Telegram?.WebApp;
-if(tg) { tg.expand(); tg.ready(); }
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+window.tg = tg;
+if (tg) {
+  tg.ready();
+  tg.expand();                                  // to'liq balandlikka ochadi
+  if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();  // pastga surib yopilmasin
+  try { if (tg.requestFullscreen) tg.requestFullscreen(); } catch (e) {}
+  // Telegram mavzusiga moslash (ixtiyoriy): agar foydalanuvchi Telegramda light tema bo'lsa
+  try { if (tg.colorScheme === 'light') document.documentElement.setAttribute('data-theme','light'); } catch(e){}
+}
 </script>
 
 <div id="wall" aria-hidden="true">
@@ -333,7 +344,7 @@ if(tg) { tg.expand(); tg.ready(); }
       <button class="rbtn menuBtn" id="menuBtn" aria-label="Menyu"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
       <div class="search"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.2-3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input id="q" placeholder="Modlarni qidirish..."></div>
       <div class="tacts">
-        <button class="rbtn" onclick="if(window.Telegram?.WebApp?.requestFullscreen) { Telegram.WebApp.requestFullscreen(); } else if(document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen(); }" title="To'liq ekran" style="font-size:16px;">⛶</button>
+        <button class="rbtn" onclick="if(window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.requestFullscreen){window.Telegram.WebApp.requestFullscreen();}else if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen();}" title="To'liq ekran" style="font-size:16px;">⛶</button>
         <button class="rbtn" id="themeBtn" aria-label="Mavzu"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
         <button class="rbtn" aria-label="Bildirishnoma"><span class="dotn"></span><svg viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 19a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.8"/></svg></button>
         <span class="prof"><span class="av">A</span><b>Asliddin</b><svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -350,7 +361,7 @@ if(tg) { tg.expand(); tg.ready(); }
           <span class="seg" role="group" aria-label="Obuna"><button id="stNo" aria-pressed="true">Obunasiz</button><button id="stPro" aria-pressed="false">Pro</button></span>
           <span class="seg" role="group" aria-label="Admin"><button id="adOff" aria-pressed="true">Oddiy</button><button id="adOn" aria-pressed="false">Admin</button></span>
         </div>
-        
+
         <div id="filterBar" style="display:flex; align-items:center; justify-content:space-between; margin:16px 0 2px; gap:12px;">
           <nav class="rail" id="rail" aria-label="Kategoriyalar" style="margin:0; padding-bottom:0; flex:1;"></nav>
           <div style="position:relative; flex:none;">
@@ -445,7 +456,7 @@ function drawGrad(cv,g){const d=cv.getContext("2d"),w=cv.width=cv.clientWidth*2,
   d.fillStyle="rgba(255,255,255,.22)";[[-40,cy],[42,cy]].forEach(p=>{d.beginPath();d.arc(cx+p[0]*s,p[1],7*s,0,7);d.fill();});}
 function drawCover(cv,src){let img=imgCache[src];const go=()=>{const w=cv.width=cv.clientWidth*2,h=cv.height=cv.clientHeight*2,d=cv.getContext("2d");
   const r=Math.max(w/img.width,h/img.height),iw=img.width*r,ih=img.height*r;d.clearRect(0,0,w,h);d.drawImage(img,(w-iw)/2,(h-ih)/2,iw,ih);};
-  if(img&&img.complete){go();return;}img=new Image();imgCache[src]=img;img.onload=go;img.src=src;}
+  if(img&&img.complete){go();return;}img=new Image();img.crossOrigin="anonymous";imgCache[src]=img;img.onload=go;img.src=src;}
 function paint(cv,m){if(!cv)return;if(m.cover)drawCover(cv,m.cover);else drawGrad(cv,m.g);}
 
 const STAR='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l2.7 5.6 6.1.7-4.5 4.2 1.2 6L12 16.9 6.5 19.1l1.2-6L3.2 8.9l6.1-.7L12 2.6z"/></svg>';
@@ -468,14 +479,14 @@ function renderHero() {
     $(".hero-b h1").innerText = "Sevimlilar";
   } else {
     $(".k").innerText = "Xush kelibsiz";
-    $(".hero-b h1").innerText = window.tg?.initDataUnsafe?.user?.first_name || "Asliddin";
+    $(".hero-b h1").innerText = (window.tg && window.tg.initDataUnsafe && window.tg.initDataUnsafe.user && window.tg.initDataUnsafe.user.first_name) || "Asliddin";
   }
   renderSub();
 }
 
 function renderSub(){const el=$("#subBar");
   if(isPro){
-    const dleft = window.subState?.days_left || 30;
+    const dleft = (window.subState && window.subState.days_left) || 30;
     el.innerHTML=`<div class="subbar"><svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="3.2"/><circle cx="18" cy="18" r="15.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="97.4" stroke-dashoffset="34" transform="rotate(-90 18 18)"/><text x="18" y="16.5" text-anchor="middle" font-size="9" font-weight="800" fill="#fff" font-family="Saira">${dleft}</text><text x="18" y="24" text-anchor="middle" font-size="5" fill="rgba(255,255,255,.7)" font-family="Hanken Grotesk">KUN</text></svg><div class="txt"><div class="st">Pro obuna <span class="dot" style="background:#2fd08a"></span></div><div class="ss">Barcha modlar ochiq</div></div></div>`;
   }
   else {
@@ -654,7 +665,7 @@ document.addEventListener("click",e=>{
   const tset=e.target.closest("[data-theme-set]");if(tset){document.documentElement.setAttribute("data-theme",tset.dataset.themeSet);repaintAll();renderSettings();return;}
   const wrm=e.target.closest("[data-wrm]");if(wrm){const i=+wrm.dataset.wrm,was=WALLS[i];WALLS.splice(i,1);if(activeWall===was){activeWall=null;applyWall();}renderSettings();return;}
   const wc=e.target.closest("[data-w]");if(wc){const v=wc.dataset.w;activeWall=v==="none"?null:WALLS[+v];applyWall();renderSettings();return;}
-  
+
   const chip=e.target.closest(".chip");
   if(chip && !chip.matches('select')){
     activeCat=chip.dataset.cat;
@@ -663,7 +674,7 @@ document.addEventListener("click",e=>{
     renderGrid();
     return;
   }
-  
+
   const op=e.target.closest("[data-open]");if(op){openSheet(window.MODS.find(m=>m.id==op.dataset.open));return;}
   const fv=e.target.closest("[data-fav]");
   if(fv){
@@ -672,7 +683,7 @@ document.addEventListener("click",e=>{
     renderGrid();
     return;
   }
-  
+
   if(e.target.closest("#editImg")){closeSheet();openEditor(currentMod);return;}
   if(e.target.closest("#paneEdit")){openEditor(editMod);return;}
   if(e.target.closest("#paneSave")){renderGrid();return;}
@@ -701,7 +712,7 @@ renderHero();renderRail();renderGrid();renderPane();
 addEventListener("resize",()=>{repaintAll();renderPane();});
 </script>
 
-<!-- BEAMMODS API & DRM OVERRIDE -->
+<!-- BEAMMODS API (real data) -->
 <script>
 (async function initRealData() {
     let subState = { is_active: false, tier: 'free' };
@@ -709,11 +720,12 @@ addEventListener("resize",()=>{repaintAll();renderPane();});
         const res = await fetch(API_URL + '/api/me', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ init_data: window.Telegram?.WebApp?.initData })
+            body: JSON.stringify({ init_data: (window.tg && window.tg.initData) || '' })
         });
         const data = await res.json();
         if (data.ok) subState = data.subscription;
         window.isPro = subState.is_active && subState.tier !== 'free';
+        isPro = window.isPro;
         window.subState = subState;
         if (window.renderHero) window.renderHero();
     } catch(e) {}
@@ -727,43 +739,23 @@ addEventListener("resize",()=>{repaintAll();renderPane();});
                 if(img.startsWith('tg_photo:')) img = API_URL + '/api/photo/' + img.split(':')[1];
                 return {
                     id: m.id, name: m.name, by: 'BeamModsStudio', cat: m.category,
-                    pro: m.price > 0 || m.mod_key ? true : false, price: m.price,
+                    pro: (m.price > 0 || m.mod_key) ? true : false, price: m.price,
                     dl: m.downloads || 0, desc: m.description || '', g: ["#3a4654","#11161d"],
                     cover: img || null, images: img ? [img] : [], fav: false, mod_key: m.mod_key
                 }
             });
-            window.activeCat = "Barchasi";
             if (window.renderGrid) window.renderGrid();
         }
     } catch(e) {}
-    
-    const oldRenderGrid = window.renderGrid;
-    window.renderGrid = function() {
-        if(oldRenderGrid) oldRenderGrid();
-        setTimeout(() => {
-            window.MODS.forEach(m => {
-                if(m.mod_key) {
-                    document.querySelectorAll('.card').forEach(c => {
-                        if(c.textContent.includes(m.name) && !c.querySelector('.drm-badge')) {
-                            const badge = document.createElement('div');
-                            badge.className = 'drm-badge';
-                            badge.style.cssText = 'position:absolute; top:8px; right:8px; background:#10B981; color:#fff; padding:4px 8px; border-radius:8px; font-size:12px; font-weight:700; z-index:10; pointer-events:none;';
-                            badge.innerHTML = '🔒 DRM';
-                            c.appendChild(badge);
-                        }
-                    });
-                }
-            });
-        }, 100);
-    };
 
+    // Yuklab olish va to'lov tugmalari (real server bilan)
     document.addEventListener("click", async (e) => {
         const dlBtn = e.target.closest("[data-dl]");
         if (dlBtn) {
             e.preventDefault(); e.stopPropagation();
             const modId = dlBtn.dataset.dl;
             const m = window.MODS.find(x => x.id == modId);
-            if (m.pro && !window.isPro) {
+            if (m && m.pro && !window.isPro) {
                 if(window.openScreen) window.openScreen("#proScreen");
                 return;
             }
@@ -772,21 +764,21 @@ addEventListener("resize",()=>{repaintAll();renderPane();});
             try {
                 const r = await fetch(API_URL + '/api/download', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mod_id: modId, init_data: window.Telegram?.WebApp?.initData })
+                    body: JSON.stringify({ mod_id: modId, init_data: (window.tg && window.tg.initData) || '' })
                 });
                 const d = await r.json();
                 if (d.ok) {
                     dlBtn.style.color = "var(--good)"; dlBtn.innerHTML = '✅';
-                    if (window.tg?.HapticFeedback) window.tg.HapticFeedback.notificationOccurred('success');
+                    if (window.tg && window.tg.HapticFeedback) window.tg.HapticFeedback.notificationOccurred('success');
                 } else if (d.error === 'subscription_required') {
                     if(window.openScreen) window.openScreen("#proScreen");
                 } else { alert("Xato: " + d.error); }
-            } catch(err) { alert("Server xatosi"); } 
+            } catch(err) { alert("Server xatosi"); }
             finally { setTimeout(() => { dlBtn.innerHTML = origHTML; dlBtn.style.pointerEvents = 'auto'; }, 3000); }
         }
         if(e.target.closest(".toPro") || e.target.closest("#goPro") || e.target.closest("#openPro")) {
             e.preventDefault(); e.stopPropagation();
-            if(window.tg) { window.tg.sendData('/upgrade'); } 
+            if(window.tg && window.tg.sendData) { window.tg.sendData('/upgrade'); }
             else { if(window.openScreen) window.openScreen("#proScreen"); }
         }
     }, true);
